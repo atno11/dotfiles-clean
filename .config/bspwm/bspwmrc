@@ -2,19 +2,21 @@
 
 export XDG_CURRENT_DESKTOP="bspwm"
 
-setxkbmap -layout us -variant intl 
+setxkbmap -layout us -variant intl
 
-set -a
-eval "$(/usr/lib/systemd/user-environment-generators/30-systemd-environment-d-generator)"
-set +a
+SYSTEMD_ENV_GENERATOR="/usr/lib/systemd/user-environment-generators/30-systemd-environment-d-generator"
 
-dbus-update-activation-environment --systemd --all
+if [[ -x "$SYSTEMD_ENV_GENERATOR" ]]; then
+    set -a
+    eval "$("$SYSTEMD_ENV_GENERATOR")"
+    set +a
+fi
+
+if command -v dbus-update-activation-environment >/dev/null 2>&1; then
+    dbus-update-activation-environment --systemd --all
+fi
 
 MODULES_DIR="$HOME/.config/bspwm/atno"
-
-if ! pgrep -x xssproxy >/dev/null; then
-    xssproxy &
-fi
 
 . "$MODULES_DIR/initial.sh"
 . "$MODULES_DIR/monitors.sh"
@@ -22,6 +24,3 @@ fi
 . "$MODULES_DIR/windowrules.sh"
 . "$MODULES_DIR/autostart.sh"
 . "$MODULES_DIR/clipboard.sh"
-
-
-

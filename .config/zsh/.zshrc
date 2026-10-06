@@ -191,17 +191,16 @@ eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/atno.omp.json)"
 
 
 # ─── Pyenv ───────────────────────────────────────────────────────
-
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 
-eval "$(pyenv init -)"
-
+if command -v pyenv >/dev/null 2>&1; then
+    eval "$(pyenv init -)"
+fi
 
 # ─── PATH ────────────────────────────────────────────────────────
 
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.spicetify:$PATH"
 
 
 # ─── Syntax Highlighting ─────────────────────────────────────────

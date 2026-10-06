@@ -1,75 +1,96 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
+set -u
 
-SESSION_TYPE=$XDG_SESSION_TYPE
+FG="cdd6f4"
+WRONG="f38ba8"
+ACCENT="b4befe"
 
+WALLPAPER_LINK="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers/.current.wall"
 
-lock_x11() {
-    local fg=c0caf5
-    local wrong=db4b4b
-    local date=7aa2f7
-    local verify=7aa2f7
-    local lock_image="${XDG_DATA_HOME:-$HOME/.local/share}/wallpapers/.current.wall"
+lock_screen() {
+    local args=(
+        -n
+        --force-clock
+        -e
 
-    i3lock -n --force-clock -i "$lock_image" -e \
-        --indicator --radius=20 --ring-width=40 \
-        --inside-color="$fg" --ring-color="$fg" \
-        --insidever-color="$verify" --ringver-color="$verify" \
-        --insidewrong-color="$wrong" --ringwrong-color="$wrong" \
-        --line-uses-inside --keyhl-color="$verify" \
-        --separator-color="$verify" --bshl-color="$verify" \
-        --time-str="%H:%M" --time-size=140 \
-        --date-str="%a, %d %b" --date-size=45 \
-        --verif-text="Verifying Password..." \
-        --wrong-text="Wrong Password!" \
-        --noinput-text="" \
-        --greeter-text="Type the password to Unlock" \
-        --ind-pos="650:760" \
-        --time-font="Fira Code:style=Bold" \
-        --date-font="Fira Code" \
-        --verif-font="Fira Code" \
-        --greeter-font="Fira Code" \
-        --wrong-font="Fira Code" \
-        --verif-size=23 --greeter-size=23 --wrong-size=23 \
-        --time-pos="650:540" \
-        --date-pos="650:600" \
-        --greeter-pos="650:930" \
-        --wrong-pos="650:970" \
-        --verif-pos="650:805" \
-        --date-color="$date" \
-        --time-color="$date" \
-        --greeter-color="$fg" \
-        --wrong-color="$wrong" \
-        --verif-color="$verify" \
-        --pointer=default \
-        --refresh-rate=0 \
-        --pass-media-keys \
+        --indicator
+        --radius=120
+        --ring-width=8
+
+        --inside-color="${FG}22"
+        --ring-color="$ACCENT"
+
+        --insidever-color="${ACCENT}33"
+        --ringver-color="$ACCENT"
+
+        --insidewrong-color="${WRONG}33"
+        --ringwrong-color="$WRONG"
+
+        --line-uses-inside
+        --keyhl-color="$ACCENT"
+        --separator-color="$ACCENT"
+        --bshl-color="$WRONG"
+
+        --time-str="%H:%M"
+        --date-str="%a, %d %b %Y"
+
+        --verif-text="Verifying..."
+        --wrong-text="Wrong password"
+        --noinput-text=""
+        --greeter-text="Type your password to unlock"
+
+        --time-font="JetBrainsMono Nerd Font"
+        --date-font="JetBrainsMono Nerd Font"
+        --verif-font="JetBrainsMono Nerd Font"
+        --greeter-font="JetBrainsMono Nerd Font"
+        --wrong-font="JetBrainsMono Nerd Font"
+
+        --time-color="$ACCENT"
+        --date-color="$ACCENT"
+        --greeter-color="$FG"
+        --wrong-color="$WRONG"
+        --verif-color="$ACCENT"
+
+        --pointer=default
+
+        --pass-media-keys
         --pass-volume-keys
+    )
+
+    if [[ -L "$WALLPAPER_LINK" ]]; then
+        local wallpaper
+
+        wallpaper="$(readlink -f "$WALLPAPER_LINK" 2>/dev/null || true)"
+
+        if [[ -f "$wallpaper" ]]; then
+            args+=(-i "$wallpaper")
+        fi
+    fi
+
+    i3lock "${args[@]}"
 }
 
+case "${1:-}" in
+    --suspend)
+        lock_screen &
+        lock_pid=$!
 
-case "$SESSION_TYPE" in
-    "wayland")
-        if [[ "$1" == "--suspend" ]]; then
-            systemctl suspend
-        else
-            hyprlock
-        fi
-        ;;
-    "x11")
-        if [[ "$1" == "--suspend" ]]; then
+        sleep 0.5
+
+        if kill -0 "$lock_pid" 2>/dev/null; then
             systemctl suspend
         fi
-        lock_x11
+
+        wait "$lock_pid"
         ;;
+
+    "")
+        lock_screen
+        ;;
+
     *)
-        echo "The session type is not defined or is not Wayland/X11."
+        echo "Usage: $0 [--suspend]" >&2
+        exit 1
+        ;;
 esac

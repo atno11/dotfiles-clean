@@ -1,105 +1,60 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
+ACTION="${1:-toggle}"
 
-SESSION_TYPE=$XDG_SESSION_TYPE
-FLAG_FILE="$HOME/.config/hypr/current_bar"
-ACTION="toggle"
-
-# Parsing arguments
-case "$1" in
-    "--start") ACTION="start" ;;
-    "--stop")  ACTION="stop"  ;;
-    "")
-        # No arguments - save toggle
+case "$ACTION" in
+    --start)
+        ACTION="start"
+        ;;
+    --stop)
+        ACTION="stop"
+        ;;
+    toggle|"")
+        ACTION="toggle"
         ;;
     *)
-        echo "Unknown Argument: $1"
-        echo "Utilization: $0 [--start|--stop]"
+        echo "Usage: $0 [--start|--stop]" >&2
         exit 1
         ;;
 esac
 
-# Launch bar with UWSM support
-launch_bar() {
-    local bar_name="$1"
-    # Use service type for auto-restart capability when UWSM is active
-    # nohup is needed here because we want the bar to survive toggle-bar.sh exit
-    if [[ "$bar_name" == "mewline" ]]; then
-        nohup "${XDG_BIN_HOME:-$HOME/bin}/uwsm-launcher.sh" -t service -s s "$bar_name" >/dev/null 2>&1 &
-    else
-        nohup "${XDG_BIN_HOME:-$HOME/bin}/uwsm-launcher.sh" -t service -s s "$bar_name" >/dev/null 2>&1 &
+start_bar() {
+    if pgrep -x polybar >/dev/null 2>&1; then
+        return 0
     fi
-    disown
+
+    if [[ ! -x "$HOME/.config/polybar/launch.sh" ]]; then
+        echo "Polybar launcher not found." >&2
+        return 1
+    fi
+
+    "$HOME/.config/polybar/launch.sh"
+
+    bspc config -m focused top_padding 31
 }
 
-handle_wayland() {
-    [ ! -f "$FLAG_FILE" ] && echo "mewline" > "$FLAG_FILE"
-    current_bar=$(cat "$FLAG_FILE")
+stop_bar() {
+    if pgrep -x polybar >/dev/null 2>&1; then
+        killall polybar
+    fi
 
-    case "$ACTION" in
-        "start")
-            if ! pgrep -x "$current_bar" >/dev/null; then
-                launch_bar "$current_bar"
-            fi
-            ;;
-
-        "stop")
-            pgrep -x "$current_bar" >/dev/null && pkill -x "$current_bar"
-            ;;
-
-        "toggle")
-            if pgrep -x "$current_bar" >/dev/null; then
-                pkill -x "$current_bar"
-            else
-                launch_bar "$current_bar"
-            fi
-            ;;
-    esac
+    bspc config -m focused top_padding 0
 }
 
-handle_x11() {
-    case "$ACTION" in
-        "start")
-            if ! pgrep -x polybar >/dev/null; then
-                "$HOME/.config/polybar/launch.sh"
-                bspc config -m focused top_padding 31
-            fi
-            ;;
+case "$ACTION" in
+    start)
+        start_bar
+        ;;
 
-        "stop")
-            if pgrep -x polybar >/dev/null; then
-                killall polybar
-                bspc config -m focused top_padding 0
-            fi
-            ;;
+    stop)
+        stop_bar
+        ;;
 
-        "toggle")
-            if pgrep -x polybar >/dev/null; then
-                killall polybar
-                bspc config -m focused top_padding 0
-            else 
-                "$HOME/.config/polybar/launch.sh"
-                bspc config -m focused top_padding 31
-            fi
-            ;;
-    esac
-}
-
-case "$SESSION_TYPE" in
-    "wayland") handle_wayland ;;
-    "x11")     handle_x11     ;;
-    *)
-        echo "The session type is not defined or is not Wayland/X11."
-        exit 1
+    toggle)
+        if pgrep -x polybar >/dev/null 2>&1; then
+            stop_bar
+        else
+            start_bar
+        fi
         ;;
 esac
-
-exit 0

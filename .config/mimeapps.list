@@ -1,6 +1,4 @@
-
 [Default Applications]
-x-scheme-handler/discord=vesktop.desktop
 x-scheme-handler/opendeck=opendeck-handler.desktop
 x-scheme-handler/openaction=opendeck-handler.desktop
 x-scheme-handler/streamdeck=opendeck-handler.desktop

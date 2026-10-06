@@ -2,8 +2,8 @@ context.modules = [
     {
         name = libpipewire-module-vban-send
         args = {
-            destination.ip = "192.168.1.181"
-            destination.port = 6980
+            destination.ip = "@VBAN_TARGET_IP@"
+            destination.port = @VBAN_TARGET_PORT@
             sess.name = "ARCH_MAIN"
 
             audio.format = "S16LE"
@@ -24,8 +24,8 @@ context.modules = [
     {
         name = libpipewire-module-vban-send
         args = {
-            destination.ip = "192.168.1.181"
-            destination.port = 6980
+            destination.ip = "@VBAN_TARGET_IP@"
+            destination.port = @VBAN_TARGET_PORT@
             sess.name = "ARCH_GAMES"
 
             audio.format = "S16LE"
@@ -46,8 +46,8 @@ context.modules = [
     {
         name = libpipewire-module-vban-send
         args = {
-            destination.ip = "192.168.1.181"
-            destination.port = 6980
+            destination.ip = "@VBAN_TARGET_IP@"
+            destination.port = @VBAN_TARGET_PORT@
             sess.name = "ARCH_AUX"
 
             audio.format = "S16LE"

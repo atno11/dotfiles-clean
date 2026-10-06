@@ -1,126 +1,63 @@
 #!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
+set -u
 
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
-WALLPAPERS_DIR="${DATA_HOME}/wallpapers"
+WALLPAPERS_DIR="$DATA_HOME/wallpapers"
 CURRENT_WALL_LINK="$WALLPAPERS_DIR/.current.wall"
-SESSION_TYPE=${XDG_SESSION_TYPE:-unknown}
 
 mkdir -p "$WALLPAPERS_DIR" || {
-    echo "Failed to create wallpapers directory: $WALLPAPERS_DIR"
+    echo "Failed to create wallpapers directory: $WALLPAPERS_DIR" >&2
     exit 1
 }
 
 update_wallpaper_link() {
     local target_wallpaper
-    target_wallpaper=$(realpath "$1") || return 1
 
-    [[ -L "$CURRENT_WALL_LINK" ]] && rm "$CURRENT_WALL_LINK"
+    target_wallpaper="$(realpath "$1")" || return 1
 
     ln -sfn "$target_wallpaper" "$CURRENT_WALL_LINK" || {
-        echo "Failed to create symlink"
+        echo "Failed to create wallpaper symlink." >&2
         return 1
     }
 }
 
-get_refresh_rate() {
-    local default_fps=60
+apply_wallpaper() {
+    local wallpaper="$1"
 
-    [[ "$SESSION_TYPE" != "wayland" ]] && {
-        echo "$default_fps"
-        return
-    }
-
-    if command -v wlr-randr >/dev/null; then
-        wlr-randr --json 2>/dev/null |
-            jq -r '.[].modes[] | select(.current == true) | .refresh | round' |
-            sort -nr |
-            head -1
-    else
-        echo "$default_fps"
+    if ! command -v feh >/dev/null 2>&1; then
+        echo "feh is required to set the wallpaper." >&2
+        return 1
     fi
-}
 
-get_cursor_pos() {
-    [[ "$SESSION_TYPE" != "wayland" ]] && {
-        echo "0,0"
-        return
-    }
-
-    if command -v hyprctl >/dev/null; then
-        hyprctl cursorpos 2>/dev/null |
-            tr -d ' ' |
-            tr '\n' ',' |
-            sed 's/,$//'
-    else
-        echo "0,0"
-    fi
-}
-
-apply_swww() {
-    command -v swww >/dev/null || {
-        echo "Install swww for Wayland"
-        exit 1
-    }
-
-    local refresh_rate
-    local cursor_pos
-
-    refresh_rate=$(get_refresh_rate)
-    cursor_pos=$(get_cursor_pos)
-
-    if swww img "$1" \
-        --transition-bezier .43,1.19,1,.4 \
-        --transition-type grow \
-        --transition-duration 0.4 \
-        --transition-fps "$refresh_rate" \
-        --invert-y \
-        --transition-pos "$cursor_pos"
-    then
-        update_wallpaper_link "$1"
-    fi
-}
-
-apply_feh() {
-    command -v feh >/dev/null || {
-        echo "Install feh for X11"
-        exit 1
-    }
-
-    # IMPORTANT:
-    # TOP e BOTTOM são monitores virtuais RandR.
-    #
-    # --no-xinerama faz o feh ignorar essa divisão para o wallpaper
-    # e tratar o framebuffer X11 inteiro como uma única área.
-    #
-    # No setup atual:
-    # framebuffer = 1080x1920
-    #
-    # Assim o wallpaper começa no TOP e continua naturalmente
-    # no BOTTOM, sem reiniciar/cortar a imagem em cada metade.
     if feh \
         --no-fehbg \
-        --no-xinerama \
         --bg-fill \
-        "$1"
+        "$wallpaper"
     then
-        update_wallpaper_link "$1"
+        update_wallpaper_link "$wallpaper"
     fi
+}
+
+find_random_wallpaper() {
+    find "$WALLPAPERS_DIR" \
+        -type f \
+        \( \
+            -iname "*.jpg" \
+            -o -iname "*.jpeg" \
+            -o -iname "*.png" \
+            -o -iname "*.webp" \
+        \) \
+        ! -name ".current.wall" \
+        2>/dev/null |
+        shuf -n 1
 }
 
 apply_current_wallpaper() {
     local target_wall=""
 
     if [[ -L "$CURRENT_WALL_LINK" ]]; then
-        target_wall=$(readlink -f "$CURRENT_WALL_LINK")
+        target_wall="$(readlink -f "$CURRENT_WALL_LINK" 2>/dev/null || true)"
 
         if [[ ! -f "$target_wall" ]]; then
             target_wall=""
@@ -130,67 +67,33 @@ apply_current_wallpaper() {
     if [[ -z "$target_wall" ]]; then
         echo "Current wallpaper link missing or broken. Selecting random..."
 
-        target_wall=$(
-            find "$WALLPAPERS_DIR" \
-                -type f \
-                \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) \
-                2>/dev/null |
-                shuf -n 1
-        )
+        target_wall="$(find_random_wallpaper)"
 
         if [[ -z "$target_wall" ]]; then
-            echo "No wallpapers found in $WALLPAPERS_DIR"
-            exit 1
+            echo "No wallpapers found in $WALLPAPERS_DIR" >&2
+            return 1
         fi
     fi
 
-    case "$SESSION_TYPE" in
-        "wayland")
-            apply_swww "$target_wall"
-            ;;
-
-        "x11")
-            apply_feh "$target_wall"
-            ;;
-
-        *)
-            command -v swww >/dev/null && apply_swww "$target_wall"
-            command -v feh >/dev/null && apply_feh "$target_wall"
-            ;;
-    esac
+    apply_wallpaper "$target_wall"
 }
 
-if [[ "$1" == "--current" ]]; then
-    apply_current_wallpaper
-    exit $?
-else
-    [[ -z "$1" ]] && {
-        echo "No wallpaper specified"
-        exit 1
-    }
-
-    [[ ! -f "$1" ]] && {
-        echo "File not found: $1"
-        exit 1
-    }
-fi
-
-case "$SESSION_TYPE" in
-    "wayland")
-        apply_swww "$1"
+case "${1:-}" in
+    --current)
+        apply_current_wallpaper
         ;;
 
-    "x11")
-        apply_feh "$1"
+    "")
+        echo "Usage: $0 {--current|wallpaper}" >&2
+        exit 1
         ;;
 
     *)
-        echo "Unknown session type: $SESSION_TYPE"
-        echo "Trying fallback methods..."
+        if [[ ! -f "$1" ]]; then
+            echo "File not found: $1" >&2
+            exit 1
+        fi
 
-        command -v swww >/dev/null && apply_swww "$1"
-        command -v feh >/dev/null && apply_feh "$1"
-
-        exit 1
+        apply_wallpaper "$1"
         ;;
 esac

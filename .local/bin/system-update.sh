@@ -1,219 +1,195 @@
 #!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# Arch Linux Update Checker with Cache
-# Enhanced version for bspwm status bar
-
-SESSION_TYPE=$XDG_SESSION_TYPE
 DEFAULT_UPDATED_COLOR="#a6e3a1"
 DEFAULT_UNUPDATED_COLOR="#fab387"
 DEFAULT_TERMINAL="ghostty"
 
-# Cache settings
 CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/system-update"
 CACHE_FILE="$CACHE_DIR/updates.cache"
-CACHE_DURATION=300  # 5 minutes in seconds
+CACHE_DURATION=300
 
 show_help() {
     echo "Usage: $0 [OPTIONS]"
-    echo ""
+    echo
     echo "Options:"
-    echo "  --status              Show the update status."
-    echo "  --updated-color COLOR Set the color for zero updates (default: $DEFAULT_UPDATED_COLOR)."
-    echo "  --unupdated-color COLOR Set the color for non-zero updates (default: $DEFAULT_UNUPDATED_COLOR)."
-    echo "  --terminal TERMINAL   Specify the terminal to run (default: $DEFAULT_TERMINAL)."
-    echo "  --force               Force update check, ignore cache."
-    echo "  --help                Show this message."
-    echo ""
-    echo "Example:"
+    echo "  --status                 Show update status."
+    echo "  --updated-color COLOR    Color when there are no updates."
+    echo "  --unupdated-color COLOR  Color when updates are available."
+    echo "  --terminal TERMINAL      Terminal used for the upgrade."
+    echo "  --force                  Ignore cache and check again."
+    echo "  --help                   Show this message."
+    echo
+    echo "Examples:"
     echo "  $0 --status"
     echo "  $0 --status --force"
     echo "  $0 --terminal ghostty"
 }
 
-# Create cache directory if not exists
 ensure_cache_dir() {
     mkdir -p "$CACHE_DIR"
 }
 
-# Check if cache is valid
 is_cache_valid() {
-    if [ ! -f "$CACHE_FILE" ]; then
-        return 1
-    fi
+    [[ -f "$CACHE_FILE" ]] || return 1
 
     local current_time
     local cache_time
     local age
 
-    current_time=$(date +%s)
-    cache_time=$(stat -c %Y "$CACHE_FILE" 2>/dev/null || stat -f %m "$CACHE_FILE" 2>/dev/null)
-
-    if [ -z "$cache_time" ]; then
-        return 1
-    fi
+    current_time="$(date +%s)"
+    cache_time="$(stat -c %Y "$CACHE_FILE" 2>/dev/null)" || return 1
 
     age=$((current_time - cache_time))
 
-    if [ "$age" -lt "$CACHE_DURATION" ]; then
-        return 0
-    fi
-
-    return 1
+    (( age < CACHE_DURATION ))
 }
 
-# Read cached value
 read_cache() {
-    cat "$CACHE_FILE" 2>/dev/null || echo "0"
+    cat "$CACHE_FILE" 2>/dev/null || echo 0
 }
 
-# Write to cache
 write_cache() {
-    echo "$1" > "$CACHE_FILE"
+    printf '%s\n' "$1" > "$CACHE_FILE"
 }
 
-# Invalidate cache
 invalidate_cache() {
     rm -f "$CACHE_FILE"
 }
 
-# Check for Arch Linux
 check_release() {
-    if [ ! -f /etc/arch-release ]; then
-        return 1
-    fi
-
-    return 0
+    [[ -f /etc/arch-release ]]
 }
 
-# Get AUR helper
-get_aurhlpr() {
-    if command -v yay &>/dev/null; then
+get_aur_helper() {
+    if command -v yay >/dev/null 2>&1; then
         echo "yay"
-    elif command -v paru &>/dev/null; then
+    elif command -v paru >/dev/null 2>&1; then
         echo "paru"
-    else
-        echo ""
     fi
 }
 
-# Check official updates
 check_official_updates() {
     local count=0
 
-    if command -v checkupdates &>/dev/null; then
-        count=$(checkupdates 2>/dev/null | wc -l)
+    if command -v checkupdates >/dev/null 2>&1; then
+        count="$(
+            checkupdates 2>/dev/null |
+                wc -l
+        )"
     fi
 
     echo "$count"
 }
 
-# Check AUR updates
 check_aur_updates() {
     local aur_helper
     local count=0
 
-    aur_helper=$(get_aurhlpr)
+    aur_helper="$(get_aur_helper)"
 
-    if [ -z "$aur_helper" ]; then
-        echo 0
-        return
-    fi
-
-    if command -v "$aur_helper" &>/dev/null; then
-        count=$("$aur_helper" -Qum 2>/dev/null | wc -l)
+    if [[ -n "$aur_helper" ]]; then
+        count="$(
+            "$aur_helper" -Qua 2>/dev/null |
+                wc -l
+        )"
     fi
 
     echo "$count"
 }
 
-# Check Flatpak updates
 check_flatpak_updates() {
     local count=0
 
-    if command -v flatpak &>/dev/null; then
-        count=$(flatpak remote-ls --updates 2>/dev/null | wc -l)
+    if command -v flatpak >/dev/null 2>&1; then
+        count="$(
+            flatpak remote-ls --updates 2>/dev/null |
+                wc -l
+        )"
     fi
 
     echo "$count"
 }
 
-# Calculate total updates
 calculate_updates() {
-    local force_check=${1:-0}
+    local force_check="${1:-0}"
 
     ensure_cache_dir
 
-    # Use cache if valid and not forced
-    if [ "$force_check" -eq 0 ] && is_cache_valid; then
+    if (( force_check == 0 )) && is_cache_valid; then
         read_cache
         return
     fi
 
-    # Perform actual check
-    local ofc aur fpk total
+    local official
+    local aur
+    local flatpak
+    local total
 
-    ofc=$(check_official_updates)
-    aur=$(check_aur_updates)
-    fpk=$(check_flatpak_updates)
-    total=$((ofc + aur + fpk))
+    official="$(check_official_updates)"
+    aur="$(check_aur_updates)"
+    flatpak="$(check_flatpak_updates)"
 
-    # Write to cache
+    total=$((official + aur + flatpak))
+
     write_cache "$total"
-
     echo "$total"
 }
 
-# Print status for statusbar
 print_status() {
-    local updates color force_check
+    local updated_color="$1"
+    local unupdated_color="$2"
+    local force_check="${3:-0}"
 
-    force_check=${3:-0}
-    updates=$(calculate_updates "$force_check")
-    color=${2:-$DEFAULT_UNUPDATED_COLOR}
+    local updates
+    local color
 
-    if [ "$updates" -eq 0 ]; then
+    updates="$(calculate_updates "$force_check")"
+    color="$unupdated_color"
+
+    if (( updates == 0 )); then
         updates=""
-        color=${1:-$DEFAULT_UPDATED_COLOR}
+        color="$updated_color"
     fi
 
-    if [ "$SESSION_TYPE" == "wayland" ]; then
-        echo "<span color=\"$color\">󰮯 $updates </span>"
-    elif [ "$SESSION_TYPE" == "x11" ]; then
-        echo "%{F$color}󰮯 $updates %{F-}"
-    fi
+    printf '%%{F%s}󰮯 %s %%{F-}\n' "$color" "$updates"
 }
 
-# Trigger upgrade in Ghostty
-trigger_upgrade() {
-    local aurhlpr
-    local terminal=${1:-$DEFAULT_TERMINAL}
-    local command
+build_upgrade_command() {
+    local aur_helper
 
-    aurhlpr=$(get_aurhlpr)
+    aur_helper="$(get_aur_helper)"
 
-    if [ -z "$aurhlpr" ]; then
-        aurhlpr="pacman"
+    if [[ -n "$aur_helper" ]]; then
+        printf '%s' "$aur_helper -Syu"
+    else
+        printf '%s' "sudo pacman -Syu"
     fi
 
-    command='sudo '"$aurhlpr"' -Syu && flatpak update -y; read -n 1 -p "Press any key to continue..."'
+    if command -v flatpak >/dev/null 2>&1; then
+        printf '%s' " && flatpak update -y"
+    fi
 
-    case $terminal in
+    printf '%s' '; printf "\nPress any key to close..."; read -r -n 1'
+}
+
+trigger_upgrade() {
+    local terminal="${1:-$DEFAULT_TERMINAL}"
+    local command
+
+    command="$(build_upgrade_command)"
+
+    case "$terminal" in
         ghostty)
-            ghostty -e bash -c "$command"
+            ghostty -e bash -lc "$command"
             ;;
         *)
-            echo "Unsupported terminal: $terminal. Please run the command manually."
-            exit 1
+            echo "Unsupported terminal: $terminal" >&2
+            echo "Command:"
+            echo "$command"
+            return 1
             ;;
     esac
 
-    # Invalidate cache after update
     invalidate_cache
 }
 
@@ -223,35 +199,56 @@ main() {
     local updated_color="$DEFAULT_UPDATED_COLOR"
     local unupdated_color="$DEFAULT_UNUPDATED_COLOR"
     local terminal="$DEFAULT_TERMINAL"
-    local status=0
+    local status=false
     local force_check=0
 
-    while [[ $# -gt 0 ]]; do
-        case $1 in
+    while (( $# > 0 )); do
+        case "$1" in
             --status)
-                status=1
+                status=true
                 ;;
+
             --updated-color)
+                [[ $# -ge 2 ]] || {
+                    echo "Missing value for --updated-color" >&2
+                    exit 1
+                }
+
+                updated_color="$2"
                 shift
-                updated_color="$1"
                 ;;
+
             --unupdated-color)
+                [[ $# -ge 2 ]] || {
+                    echo "Missing value for --unupdated-color" >&2
+                    exit 1
+                }
+
+                unupdated_color="$2"
                 shift
-                unupdated_color="$1"
                 ;;
+
             --terminal)
+                [[ $# -ge 2 ]] || {
+                    echo "Missing value for --terminal" >&2
+                    exit 1
+                }
+
+                terminal="$2"
                 shift
-                terminal="$1"
                 ;;
+
             --force)
                 force_check=1
                 ;;
+
             --help)
                 show_help
                 exit 0
                 ;;
+
             *)
-                echo "Unknown argument: $1"
+                echo "Unknown argument: $1" >&2
                 show_help
                 exit 1
                 ;;
@@ -260,8 +257,11 @@ main() {
         shift
     done
 
-    if [ "$status" -eq 1 ]; then
-        print_status "$updated_color" "$unupdated_color" "$force_check"
+    if $status; then
+        print_status \
+            "$updated_color" \
+            "$unupdated_color" \
+            "$force_check"
     else
         trigger_upgrade "$terminal"
     fi

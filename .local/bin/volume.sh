@@ -1,137 +1,187 @@
 #!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
-
-SESSION_TYPE="$XDG_SESSION_TYPE"
 ENABLED_COLOR="#A3BE8C"
 DISABLED_COLOR="#D35F5E"
 
+DEVICE=""
+ACTION=""
+STATUS=false
+PAMIXER_ARGS=()
+
+
 print_error() {
-    echo "Usage: $0 --device <input|output> --action <increase|decrease|toggle> [--status] [--enabled-color] [--disabled-color]"
+    echo \
+        "Usage: $0 --device <input|output> [--action <increase|decrease|toggle>] [--status] [--enabled-color COLOR] [--disabled-color COLOR]" \
+        >&2
+
     exit 1
 }
 
-notify_vol() {
-    vol=$(get_volume)
-    notify-send -u low "Volume" "${vol}%"
+
+pamixer_cmd() {
+    pamixer \
+        "${PAMIXER_ARGS[@]}" \
+        "$@"
 }
+
 
 get_volume() {
-    if [[ "${srce}" == "--default-source" ]]; then
-        pamixer "${srce}" --get-volume
-    else
-        pamixer --get-volume
-    fi
+    pamixer_cmd --get-volume
 }
 
-print_status() {
-    local vol=$(get_volume)
-    
-    if [[ "${device}" == "output" ]]; then
-        if [[ $(pamixer --get-mute) == "true" ]]; then
-            local icon="  $vol%"
-			local color=$DISABLED_COLOR
-        elif [[ "$vol" -le 30 ]]; then
-            local icon=" $vol%"
-			local color=$ENABLED_COLOR
-        elif [[ "$vol" -le 60 ]]; then
-            local icon=" $vol%"
-			local color=$ENABLED_COLOR
-        elif [[ "$vol" -le 80 ]]; then
-            local icon="  $vol%"
-			local color=$ENABLED_COLOR
-        else
-            local icon="  $vol%" 
-			local color=$ENABLED_COLOR
-        fi
-    elif [[ "${device}" == "input" ]]; then
-        if [[ $(pamixer "${srce}" --get-mute) == "true" ]]; then
-            local icon="  $vol%"
-			local color=$DISABLED_COLOR
-        else
-            local icon=" $vol%"
-			local color=$ENABLED_COLOR
-        fi
-    fi
 
-	if [[ "$SESSION_TYPE" == "wayland" ]]; then
-        echo "<span color=\"$color\">$icon</span>"
-    elif [[ "$SESSION_TYPE" == "x11" ]]; then
-        echo "%{F$color}$icon%{F-}"
-    fi
+is_muted() {
+    [[ "$(pamixer_cmd --get-mute)" == "true" ]]
 }
 
-action_volume() {
-    case "${action}" in
-        increase) 
-            pamixer "${srce}" -i 2 
-            ;;
-        decrease) 
-            pamixer "${srce}" -d 2 
-            ;;
-        toggle) 
-            pamixer "${srce}" -t 
-            notify_mute 
-            exit 0 
-            ;;
-        *) 
-            print_error 
-            ;;
-    esac
+
+notify_volume() {
+    local volume
+
+    volume="$(get_volume)"
+
+    notify-send \
+        -u low \
+        "Volume" \
+        "${volume}%"
 }
+
 
 notify_mute() {
-    if [[ $(pamixer "${srce}" --get-mute) == "true" ]]; then
-        notify-send -u low "Muted"
+    if is_muted; then
+        notify-send \
+            -u low \
+            "Muted"
     else
-        notify-send -u low "Unmuted"
+        notify-send \
+            -u low \
+            "Unmuted"
     fi
 }
 
-# Parse arguments
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --device) device="$2"; shift ;;
-        --action) action="$2"; shift ;;
-		--enabled-color)
-			ENABLED_COLOR="$2"
-			shift
-			;;
-		--disabled-color)
-			DISABLED_COLOR="$2"
-			shift
-			;;
-        --status) status=true ;;
-        *) print_error ;;
+
+print_status() {
+    local volume
+    local icon
+    local color
+
+    volume="$(get_volume)"
+
+    if [[ "$DEVICE" == "output" ]]; then
+        if is_muted; then
+            icon="  $volume%"
+            color="$DISABLED_COLOR"
+        elif (( volume <= 30 )); then
+            icon=" $volume%"
+            color="$ENABLED_COLOR"
+        elif (( volume <= 60 )); then
+            icon=" $volume%"
+            color="$ENABLED_COLOR"
+        else
+            icon="  $volume%"
+            color="$ENABLED_COLOR"
+        fi
+    else
+        if is_muted; then
+            icon="  $volume%"
+            color="$DISABLED_COLOR"
+        else
+            icon=" $volume%"
+            color="$ENABLED_COLOR"
+        fi
+    fi
+
+    printf '%%{F%s}%s%%{F-}\n' \
+        "$color" \
+        "$icon"
+}
+
+
+change_volume() {
+    case "$ACTION" in
+        increase)
+            pamixer_cmd -i 2
+            notify_volume
+            ;;
+
+        decrease)
+            pamixer_cmd -d 2
+            notify_volume
+            ;;
+
+        toggle)
+            pamixer_cmd -t
+            notify_mute
+            ;;
+
+        *)
+            print_error
+            ;;
     esac
+}
+
+
+while (( $# > 0 )); do
+    case "$1" in
+        --device)
+            [[ $# -ge 2 ]] || print_error
+            DEVICE="$2"
+            shift
+            ;;
+
+        --action)
+            [[ $# -ge 2 ]] || print_error
+            ACTION="$2"
+            shift
+            ;;
+
+        --enabled-color)
+            [[ $# -ge 2 ]] || print_error
+            ENABLED_COLOR="$2"
+            shift
+            ;;
+
+        --disabled-color)
+            [[ $# -ge 2 ]] || print_error
+            DISABLED_COLOR="$2"
+            shift
+            ;;
+
+        --status)
+            STATUS=true
+            ;;
+
+        *)
+            print_error
+            ;;
+    esac
+
     shift
 done
 
-case "${device}" in
-    input) srce="--default-source" ;;
-    output) srce="" ;;
-    *) print_error ;;
+
+case "$DEVICE" in
+    input)
+        PAMIXER_ARGS=(
+            --default-source
+        )
+        ;;
+
+    output)
+        PAMIXER_ARGS=()
+        ;;
+
+    *)
+        print_error
+        ;;
 esac
 
-if [[ -z "${device}" ]]; then
-    print_error
-fi
 
-if [[ "$status" == true ]]; then
+if $STATUS; then
     print_status
-    exit 0
+    exit
 fi
 
-if [[ -z "${action}" ]]; then
-    print_error
-fi
+[[ -n "$ACTION" ]] || print_error
 
-# Execute action
-action_volume
+change_volume

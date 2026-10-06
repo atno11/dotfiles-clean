@@ -1,20 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
-
-SESSION_TYPE=$XDG_SESSION_TYPE
-
-if [ "$SESSION_TYPE" == "wayland" ]; then
-    hyprpicker -f hex -a
-elif [ "$SESSION_TYPE" == "x11" ]; then
-    xcolor -s clipboard
-else
-    echo "Session type is not defined or is not Wayland/X11."
+if ! command -v xcolor >/dev/null 2>&1; then
+    echo "xcolor is required." >&2
+    exit 1
 fi
+
+xcolor -s clipboard

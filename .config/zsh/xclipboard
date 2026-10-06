@@ -186,7 +186,6 @@ eval "$(pyenv init -)"
 # ─── PATH ────────────────────────────────────────────────────────
 
 export PATH="$HOME/.local/bin:$PATH"
-export PATH="$HOME/.spicetify:$PATH"
 
 
 # ─── Syntax Highlighting ─────────────────────────────────────────

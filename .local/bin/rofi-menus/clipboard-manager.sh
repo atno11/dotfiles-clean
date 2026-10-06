@@ -1,21 +1,17 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
+set -o pipefail
 
-session_type=$XDG_SESSION_TYPE
+selection="$(
+    cliphist list |
+        rofi \
+            -dmenu \
+            -display-columns 2
+)"
 
-if [ "$session_type" == "wayland" ]; then
-    cliphist list | rofi -dmenu -display-columns 2 | cliphist decode | wl-copy
+[[ -n "$selection" ]] || exit 0
 
-elif [ "$session_type" == "x11" ]; then
-    cliphist list | rofi -dmenu -display-columns 2 | cliphist decode | xclip -selection clipboard
-else
-    echo "Session type is not defined or is not Wayland/X11."
-fi
+printf '%s\n' "$selection" |
+    cliphist decode |
+    xclip \
+        -selection clipboard
