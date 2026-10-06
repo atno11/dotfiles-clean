@@ -1,0 +1,7 @@
+[09:01:15 2026-02-14] FETCHING Version 2.42.10
+[09:01:15 2026-02-14] CREATING /home/atno/.spicetify
+[09:01:15 2026-02-14] DOWNLOADING https://github.com/spicetify/cli/releases/download/v2.42.10/spicetify-2.42.10-linux-amd64.tar.gz
+[09:01:16 2026-02-14] EXTRACTING /home/atno/.spicetify/spicetify.tar.gz
+[09:01:16 2026-02-14] SETTING EXECUTABLE PERMISSIONS TO /home/atno/.spicetify/spicetify
+[09:01:16 2026-02-14] REMOVING /home/atno/.spicetify/spicetify.tar.gz
+[09:01:16 2026-02-14] APPENDING /home/atno/.spicetify to PATH in /home/atno/.config/zsh/.zshrc

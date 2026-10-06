@@ -1,0 +1,6 @@
+include "%L"
+
+# Windows-like US-International behavior:
+# ' (dead_acute) + c = ç
+<dead_acute> <c> : "ç" U00E7
+<dead_acute> <C> : "Ç" U00C7

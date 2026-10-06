@@ -1,0 +1,228 @@
+# -- User Apps -- #
+# Description: Open Firefox
+super + shift + b
+    firefox
+# Description: Open Zed
+super + shift + z
+    zed
+# Description: Open Visual Studio Code
+super + shift + c
+    code
+# Description: Open Obsidian
+super + shift + o
+    obsidian
+# Description: Open audio control
+super + shift + p
+    pavucontrol
+# Description: Open CLI file manager
+super + shift + y
+    ghostty -e yazi
+# Description: Open OBS Studio
+super + shift + s
+    obs
+
+# -- System Binds -- #
+# Description: Open terminal
+super + Return
+    ghostty
+# Description: Open file manager
+super + e
+    nemo
+# Description: Select wallpaper
+super + w
+    sh $XDG_BIN_HOME/rofi-menus/wallpaper-selector.sh
+# Description: Select theme
+super + t
+    sh $XDG_BIN_HOME/rofi-menus/theme-selector.sh
+# Description: Pin window (existing script; independent of TOP/BOTTOM Pin)
+super + p
+    sh $XDG_BIN_HOME/window-pin.sh
+# Description: Open clipboard manager
+super + v
+    sh $XDG_BIN_HOME/rofi-menus/clipboard-manager.sh
+# Description: Open application launcher
+super + a
+    rofi -show drun
+# Description: Open power menu
+super + x
+    sh $XDG_BIN_HOME/rofi-menus/powermenu.sh
+# Description: Pick color
+super + c
+    sh $XDG_BIN_HOME/color-picker.sh
+# Description: Toggle status bar
+super + b
+    sh $XDG_BIN_HOME/toggle-bar.sh
+# Description: Open emoji picker
+super + period
+    sh $XDG_BIN_HOME/rofi-menus/rofimoji.sh
+# Description: Open system monitor
+ctrl + shift + Escape
+    ghostty -e btop
+# Description: Take screenshot GUI
+Print
+    flameshot gui
+# Description: Take fullscreen screenshot
+super + Print
+    flameshot full --clipboard
+# Description: Switch keyboard layout
+alt + shift
+    xkb-switch -n
+# Description: Hotkeys cheat sheet
+super + h
+    hotkeyhub --sxhkd $HOME/.config/bspwm/sxhkdrc
+
+# -- System Controls -- #
+# -- Player -- #
+# Description: Increase volume
+XF86AudioRaiseVolume
+    sh $XDG_BIN_HOME/volume.sh --device output --action increase
+# Description: Decrease volume
+XF86AudioLowerVolume
+    sh $XDG_BIN_HOME/volume.sh --device output --action decrease
+# Description: Toggle audio mute
+XF86AudioMute
+    sh $XDG_BIN_HOME/volume.sh --device output --action toggle
+# Description: Toggle mic mute
+XF86AudioMicMute
+    sh $XDG_BIN_HOME/volume.sh --device input --action toggle
+# Description: Play or pause media
+XF86AudioPlay
+    playerctl play-pause
+# Description: Play or pause media
+XF86AudioPause
+    playerctl play-pause
+# Description: Next track
+XF86AudioNext
+    playerctl next
+# Description: Previous track
+XF86AudioPrev
+    playerctl previous
+# Description: Stop playback
+XF86AudioStop
+    playerctl stop
+
+# -- Brightness -- #
+# Description: Increase brightness
+XF86MonBrightnessUp
+    sh $XDG_BIN_HOME/brightness.sh --up
+# Description: Decrease brightness
+XF86MonBrightnessDown
+    sh $XDG_BIN_HOME/brightness.sh --down
+
+# -- BSPWM -- #
+# Description: Exit BSPWM
+super + Delete
+    bspc quit
+# Description: Reload BSPWM and sxhkd config
+ctrl + shift + r
+    bspc wm -r; pkill -USR1 -x sxhkd; notify-send 'BSPWM / sxhkd' 'Configurações recarregadas' -t 1500
+# Description: Close window
+super + q
+    sh $XDG_BIN_HOME/window-close.sh
+# Description: Kill window
+super + k
+    sh $XDG_BIN_HOME/window-kill.sh
+# Description: Toggle floating mode
+super + space
+    bspc node -t '~floating'
+# Description: Toggle fullscreen
+alt + Return
+    bspc node -t '~fullscreen'
+# Description: Focus window right
+super + Right
+    bspc node -f east
+# Description: Focus window left
+super + Left
+    bspc node -f west
+# Description: Focus window up
+super + Up
+    bspc node -f north
+# Description: Focus window down
+super + Down
+    bspc node -f south
+# Description: Swap window right
+super + shift + Right
+    bspc node -s east
+# Description: Swap window left
+super + shift + Left
+    bspc node -s west
+# Description: Swap window up
+super + shift + Up
+    bspc node -s north
+# Description: Swap window down
+super + shift + Down
+    bspc node -s south
+# Description: Switch to last window
+alt + Tab
+    bspc node -f last
+
+# -- Logical Workspaces -- #
+# Description: Switch to workspace 1-6 (paired TOP/BOTTOM; honors Pin)
+super + {1-6}
+    ~/.config/bspwm/atno/workspace.sh {1-6}
+# Description: Switch to fullscreen workspace 7-9
+super + {7-9}
+    ~/.config/bspwm/atno/workspace.sh {7-9}
+
+# -- TOP / BOTTOM Pin -- #
+# Description: Toggle TOP Pin
+super + ctrl + t
+    bash -c 'notify-send "Pin TOP" "$("$HOME/.config/bspwm/atno/workspace.sh" pin TOP 2>&1)"'
+# Description: Toggle BOTTOM Pin
+super + ctrl + b
+    bash -c 'notify-send "Pin BOTTOM" "$("$HOME/.config/bspwm/atno/workspace.sh" pin BOTTOM 2>&1)"'
+# Description: Turn off TOP/BOTTOM Pin
+super + ctrl + shift + p
+    bash -c 'notify-send "BSPWM Pin" "$("$HOME/.config/bspwm/atno/workspace.sh" pin off 2>&1)"'
+# Description: Show TOP/BOTTOM Pin status
+super + ctrl + p
+    bash -c 'notify-send "BSPWM Pin" "$("$HOME/.config/bspwm/atno/workspace.sh" pin status 2>&1)"'
+
+# -- Workspace Navigation -- #
+# Description: Next logical workspace (honors Pin)
+super + ctrl + Right
+    ~/.config/bspwm/atno/workspace-nav.sh next
+# Description: Previous logical workspace (honors Pin)
+super + ctrl + Left
+    ~/.config/bspwm/atno/workspace-nav.sh prev
+# Description: Scroll to next logical workspace (honors Pin)
+super + button4
+    ~/.config/bspwm/atno/workspace-nav.sh next
+# Description: Scroll to previous logical workspace (honors Pin)
+super + button5
+    ~/.config/bspwm/atno/workspace-nav.sh prev
+# Description: First empty logical workspace (honors Pin)
+super + ctrl + Down
+    ~/.config/bspwm/atno/workspace-nav.sh empty
+
+# -- Window Resize / Move -- #
+# Description: Resize window right
+super + alt + Right
+    bspc node -z right 30 0
+# Description: Resize window left
+super + alt + Left
+    bspc node -z left -30 0
+# Description: Resize window up
+super + alt + Up
+    bspc node -z top 0 -30
+# Description: Resize window down
+super + alt + Down
+    bspc node -z bottom 0 30
+# Description: Move focused window to logical workspace 1-6
+super + shift + {1-6}
+    ~/.config/bspwm/atno/workspace.sh {1-6} move
+# Description: Move focused window to fullscreen workspace 7-9
+super + shift + {7-9}
+    ~/.config/bspwm/atno/workspace.sh {7-9} move
+# Description: Swap window left
+super + shift + ctrl + Left
+    bspc node -s west
+# Description: Swap window right
+super + shift + ctrl + Right
+    bspc node -s east
+# Description: Swap window up
+super + shift + ctrl + Up
+    bspc node -s north
+# Description: Swap window down
+super + shift + ctrl + Down
+    bspc node -s south

@@ -1,0 +1,9 @@
+partial alphanumeric_keys
+xkb_symbols "basic" {
+    include "us(intl)"
+
+    // No Windows: Shift+` produz ~ direto.
+    // No us(intl) do Linux: Shift+` costuma ser dead_tilde.
+    // Aqui trocamos pra ~ "normal" (asciitilde).
+    key <TLDE> { [ dead_grave, asciitilde ] };
+};

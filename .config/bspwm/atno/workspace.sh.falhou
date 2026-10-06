@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+# Alternancia de workspaces T1/B1 ... T6/B6, com pin opcional.
+# Os desktops 7, 8 e 9 continuam em tela inteira.
+set -euo pipefail
+
+TARGET="${1:-}"
+ACTION="${2:-focus}"
+LAYOUT="$HOME/.config/bspwm/atno/layout.sh"
+PIN_FILE="${XDG_RUNTIME_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}}/atno-bspwm-pin"
+
+current_monitor() {
+    bspc query -M -m focused --names 2>/dev/null || echo TOP
+}
+
+active_desktop() {
+    bspc query -D -d "$1:focused" --names
+}
+
+announce() {
+    printf '%s\n' "$1"
+    if command -v notify-send >/dev/null 2>&1; then
+        notify-send -t 1800 'BSPWM · Pin' "$1" >/dev/null 2>&1 || true
+    fi
+}
+
+PIN_SIDE=""
+PIN_DESKTOP=""
+if [[ -f "$PIN_FILE" ]]; then
+    read -r PIN_SIDE PIN_DESKTOP < "$PIN_FILE" || true
+fi
+case "$PIN_SIDE:$PIN_DESKTOP" in
+    TOP:T[1-6]|BOTTOM:B[1-6]) ;;
+    *) PIN_SIDE=""; PIN_DESKTOP="" ;;
+esac
+
+# Exemplos: workspace.sh pin TOP | BOTTOM | off | status
+if [[ "$TARGET" == pin ]]; then
+    case "${ACTION^^}" in
+        TOP|BOTTOM)
+            SIDE="${ACTION^^}"
+            if [[ "$PIN_SIDE" == "$SIDE" ]]; then
+                rm -f -- "$PIN_FILE"
+                announce "$SIDE desfixado."
+                exit 0
+            fi
+
+            DESKTOP="$(active_desktop "$SIDE")"
+            if [[ "$SIDE" == TOP && ! "$DESKTOP" =~ ^T[1-6]$ ]] ||
+               [[ "$SIDE" == BOTTOM && ! "$DESKTOP" =~ ^B[1-6]$ ]]; then
+                echo 'Ative um workspace dividido (1 a 6) antes de fixar.' >&2
+                exit 1
+            fi
+
+            mkdir -p -- "$(dirname -- "$PIN_FILE")"
+            printf '%s %s\n' "$SIDE" "$DESKTOP" > "$PIN_FILE"
+            announce "$SIDE fixado em $DESKTOP."
+            ;;
+        OFF)
+            rm -f -- "$PIN_FILE"
+            announce 'Fixacao desativada.'
+            ;;
+        STATUS)
+            if [[ -n "$PIN_SIDE" ]]; then
+                echo "$PIN_SIDE fixado em $PIN_DESKTOP"
+            else
+                echo 'Nenhuma metade fixada.'
+            fi
+            ;;
+        *)
+            echo 'Uso: workspace.sh pin {TOP|BOTTOM|off|status}' >&2
+            exit 2
+            ;;
+    esac
+    exit 0
+fi
+
+case "$TARGET" in
+    1|2|3|4|5|6)
+        SOURCE_MONITOR="$(current_monitor)"
+        "$LAYOUT" split
+
+        TOP_DESKTOP="T$TARGET"
+        BOTTOM_DESKTOP="B$TARGET"
+
+        case "$ACTION" in
+            focus)
+                case "$PIN_SIDE" in
+                    TOP)
+                        # Reativa Tn se estivermos voltando do modo FULL.
+                        bspc desktop "$PIN_DESKTOP" -a
+                        bspc desktop "$BOTTOM_DESKTOP" -f
+                        ;;
+                    BOTTOM)
+                        bspc desktop "$TOP_DESKTOP" -f
+                        bspc desktop "$PIN_DESKTOP" -a
+                        bspc monitor TOP -f
+                        ;;
+                    *)
+                        # Comportamento original: altera as duas metades.
+                        bspc desktop "$TOP_DESKTOP" -f
+                        bspc desktop "$BOTTOM_DESKTOP" -f
+                        case "$SOURCE_MONITOR" in
+                            BOTTOM) bspc monitor BOTTOM -f ;;
+                            *)      bspc monitor TOP -f ;;
+                        esac
+                        ;;
+                esac
+                ;;
+            move|move-follow)
+                case "$SOURCE_MONITOR" in
+                    BOTTOM) DEST="$BOTTOM_DESKTOP" ;;
+                    *)      DEST="$TOP_DESKTOP" ;;
+                esac
+                if [[ "$ACTION" == move-follow ]]; then
+                    bspc node -d "$DEST" --follow
+                else
+                    bspc node -d "$DEST"
+                fi
+                ;;
+            *) echo 'Acao desconhecida.' >&2; exit 2 ;;
+        esac
+        ;;
+    7|8|9)
+        # O pin fica guardado, mas nao altera a navegacao FULL.
+        "$LAYOUT" full
+        case "$ACTION" in
+            focus)
+                bspc monitor TOP -f
+                bspc desktop "$TARGET" -f
+                ;;
+            move)        bspc node -d "$TARGET" ;;
+            move-follow) bspc node -d "$TARGET" --follow ;;
+            *) echo 'Acao desconhecida.' >&2; exit 2 ;;
+        esac
+        ;;
+    *)
+        echo 'Uso: workspace.sh {1..9} [focus|move|move-follow]' >&2
+        echo '  ou workspace.sh pin {TOP|BOTTOM|off|status}' >&2
+        exit 2
+        ;;
+esac

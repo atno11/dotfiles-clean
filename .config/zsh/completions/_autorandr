@@ -1,0 +1,13 @@
+#compdef autorandr
+
+local -a profiles
+
+profiles=(~/.config/autorandr/*(/:t))
+
+_arguments \
+  '--load[Load profile]:profile:(${profiles})' \
+  '--save[Save profile]:profile:' \
+  '--remove[Remove profile]:profile:(${profiles})' \
+  '--change[Automatically load matching profile]' \
+  '--detected[Show detected profile]' \
+  '--fingerprint[Show monitor fingerprint]'

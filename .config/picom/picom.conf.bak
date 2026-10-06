@@ -1,0 +1,27 @@
+shadow = true;
+shadow-radius = 3;
+shadow-offset-x = -3;
+shadow-offset-y = 3;
+shadow-opacity = 0.9;
+
+shadow-exclude = [
+    "class_g = 'Polybar'",
+    "class_g = 'Rofi'"
+];
+
+backend = "glx";
+vsync = true;
+
+blur-method = "dual_kawase";
+blur-strength = 6;
+blur-background = true;
+blur-background-frame = true;
+
+inactive-opacity = 1.0;
+
+fading = true;
+fade-in-step = 0.035;
+fade-out-step = 0.035;
+fade-delta = 6;
+
+no-fading-openclose = false;

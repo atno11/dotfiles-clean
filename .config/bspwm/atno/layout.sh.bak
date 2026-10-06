@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+
+set -u
+
+PRIMARY="HDMI-A-0"
+
+# ==========================================================
+# Helpers
+# ==========================================================
+
+has_monitor() {
+    bspc query -M --names 2>/dev/null | grep -Fxq "$1"
+}
+
+has_desktop() {
+    bspc query -D --names 2>/dev/null | grep -Fxq "$1"
+}
+
+ensure_monitor() {
+    local name="$1"
+    local rect="$2"
+
+    if has_monitor "$name"; then
+        bspc monitor "$name" --rectangle "$rect" 2>/dev/null || true
+    else
+        bspc wm --add-monitor "$name" "$rect"
+    fi
+}
+
+ensure_desktop() {
+    local desktop="$1"
+    local monitor="$2"
+
+    if has_desktop "$desktop"; then
+        return
+    fi
+
+    bspc monitor "$monitor" -a "$desktop"
+}
+
+setup_output() {
+    xrandr \
+        --output "$PRIMARY" \
+        --mode 1920x1080 \
+        --rotate right \
+        --primary
+}
+
+# ==========================================================
+# Monitores BSPWM permanentes
+#
+# TOP nunca é removido.
+# BOTTOM nunca é removido.
+# PARK nunca é removido.
+#
+# Isso evita perder janelas ao trocar entre SPLIT e FULL.
+# ==========================================================
+
+setup_monitors() {
+    ensure_monitor TOP "1080x960+0+0"
+    ensure_monitor BOTTOM "1080x960+0+960"
+    ensure_monitor PARK "1x1+1079+1919"
+}
+
+# ==========================================================
+# Desktops permanentes
+#
+# TOP:
+# T1..T6
+# 7..9
+#
+# BOTTOM:
+# B1..B6
+#
+# PARK:
+# usado temporariamente para esconder B1..B6 no modo FULL
+# ==========================================================
+
+setup_desktops() {
+    local n
+
+    for n in 1 2 3 4 5 6; do
+        ensure_desktop "T$n" TOP
+        ensure_desktop "B$n" BOTTOM
+    done
+
+    for n in 7 8 9; do
+        ensure_desktop "$n" TOP
+    done
+}
+
+# ==========================================================
+# XRandR - SPLIT
+#
+# TOP    = 1080x960
+# BOTTOM = 1080x960
+# ==========================================================
+
+randr_split() {
+    xrandr --delmonitor TOP 2>/dev/null || true
+    xrandr --delmonitor BOTTOM 2>/dev/null || true
+    xrandr --delmonitor FULL 2>/dev/null || true
+
+    xrandr \
+        --setmonitor TOP \
+        1080/527x960/148+0+0 \
+        "$PRIMARY"
+
+    xrandr \
+        --setmonitor BOTTOM \
+        1080/527x960/148+0+960 \
+        none
+
+    sleep 0.1
+}
+
+# ==========================================================
+# XRandR - FULL
+#
+# IMPORTANTE:
+# Continua se chamando TOP.
+#
+# A Polybar fica sempre presa em TOP e não precisa ser
+# reiniciada ao trocar entre SPLIT e FULL.
+# ==========================================================
+
+randr_full() {
+    xrandr --delmonitor TOP 2>/dev/null || true
+    xrandr --delmonitor BOTTOM 2>/dev/null || true
+    xrandr --delmonitor FULL 2>/dev/null || true
+
+    xrandr \
+        --setmonitor TOP \
+        1080/527x1920/296+0+0 \
+        "$PRIMARY"
+
+    sleep 0.1
+}
+
+# ==========================================================
+# SPLIT MODE
+#
+# TOP:
+# T1..T6
+#
+# BOTTOM:
+# B1..B6
+#
+# 7..9 continuam no TOP, mas não ficam focados.
+# ==========================================================
+
+split_mode() {
+    setup_output
+    setup_monitors
+    setup_desktops
+
+    local n
+
+    # Recupera B1..B6 do PARK para BOTTOM
+    for n in 1 2 3 4 5 6; do
+        if has_desktop "B$n"; then
+            bspc desktop "B$n" -m BOTTOM 2>/dev/null || true
+        fi
+    done
+
+    # Geometria BSPWM
+    bspc monitor TOP \
+        --rectangle 1080x960+0+0
+
+    bspc monitor BOTTOM \
+        --rectangle 1080x960+0+960
+
+    bspc monitor PARK \
+        --rectangle 1x1+1079+1919
+
+    # Geometria RandR
+    randr_split
+
+    # Polybar só existe no TOP
+    bspc config -m TOP top_padding 32
+    bspc config -m BOTTOM top_padding 0
+    bspc config -m PARK top_padding 0
+
+    bspc config focus_follows_pointer true
+}
+
+# ==========================================================
+# FULL MODE
+#
+# TOP passa a ocupar 1080x1920.
+#
+# B1..B6 vão para PARK para não continuarem aparecendo
+# na parte inferior.
+#
+# TOP continua se chamando TOP:
+# isso permite manter a mesma Polybar viva.
+# ==========================================================
+
+full_mode() {
+    setup_output
+    setup_monitors
+    setup_desktops
+
+    local n
+
+    # Esconde todos os desktops inferiores sem destruir nada.
+    for n in 1 2 3 4 5 6; do
+        if has_desktop "B$n"; then
+            bspc desktop "B$n" -m PARK 2>/dev/null || true
+        fi
+    done
+
+    # TOP ocupa a tela inteira
+    bspc monitor TOP \
+        --rectangle 1080x1920+0+0
+
+    # BOTTOM continua vivo, mas praticamente fora de uso
+    bspc monitor BOTTOM \
+        --rectangle 1x1+1079+1919
+
+    bspc monitor PARK \
+        --rectangle 1x1+1079+1919
+
+    # RandR continua usando o nome TOP
+    randr_full
+
+    bspc config -m TOP top_padding 32
+    bspc config -m BOTTOM top_padding 0
+    bspc config -m PARK top_padding 0
+
+    bspc config focus_follows_pointer true
+}
+
+# ==========================================================
+# Main
+# ==========================================================
+
+case "${1:-}" in
+    split)
+        split_mode
+        ;;
+
+    full)
+        full_mode
+        ;;
+
+    *)
+        echo "Uso: $0 {split|full}" >&2
+        exit 1
+        ;;
+esac

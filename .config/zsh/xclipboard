@@ -1,0 +1,195 @@
+# Ensure running interactively
+[[ $- != *i* ]] && return
+
+# ─── Aliases ─────────────────────────────────────────────────────
+
+alias cls="clear"
+alias ls="lsd"
+alias tree="lsd --tree"
+alias vim="nvim"
+alias codex="codex"
+alias fodex="CODEX_HOME='$HOME/.fodex' codex"
+
+setopt autocd
+setopt interactivecomments
+
+
+# ─── Custom Functions ────────────────────────────────────────────
+
+autoload -Uz add-zle-hook-widget
+
+# Shift + Backspace: excluir a linha atual e voltar à anterior
+function shift-backspace-line() {
+    emulate -L zsh
+
+    if [[ $LBUFFER == *$'\n'* ]]; then
+        # Remove a linha atual e a quebra anterior.
+        LBUFFER="${LBUFFER%$'\n'*}"
+
+        # Preserva as linhas que estiverem abaixo do cursor.
+        if [[ $RBUFFER == *$'\n'* ]]; then
+            RBUFFER=$'\n'"${RBUFFER#*$'\n'}"
+        else
+            RBUFFER=''
+        fi
+    else
+        # Estamos na primeira linha.
+        if [[ $RBUFFER == *$'\n'* ]]; then
+            BUFFER="${RBUFFER#*$'\n'}"
+            CURSOR=0
+        else
+            BUFFER=''
+        fi
+    fi
+}
+
+zle -N shift-backspace-line
+bindkey $'\e[127;2u' shift-backspace-line
+
+# Wget
+function wget() {
+    command wget \
+        --hsts-file="${XDG_DATA_HOME:-$HOME/.local/share}/wget-hsts" \
+        "$@"
+}
+
+# CD: permite usar "cd ..." para subir dois diretórios
+function cd() {
+    if [[ $# -eq 1 && $1 == '...' ]]; then
+        builtin cd ../..
+    else
+        builtin cd "$@"
+    fi
+}
+
+# Yazi: retornar ao diretório selecionado ao sair
+function y() {
+    local tmp cwd
+
+    tmp="$(mktemp -t 'yazi-cwd.XXXXXX')" || return
+
+    yazi "$@" --cwd-file="$tmp"
+
+    IFS= read -r -d '' cwd < "$tmp"
+
+    if [[ -n $cwd && $cwd != $PWD ]]; then
+        builtin cd -- "$cwd"
+    fi
+
+    rm -f -- "$tmp"
+}
+
+
+# ─── Binds ───────────────────────────────────────────────────────
+
+# Ctrl + seta direita: avançar uma palavra
+bindkey '^[[1;5C' forward-word
+
+# Ctrl + seta esquerda: voltar uma palavra
+bindkey '^[[1;5D' backward-word
+
+# Backspace: apagar um caractere
+bindkey '^?' backward-delete-char
+
+# Ctrl + Backspace: apagar uma palavra
+bindkey '^H' backward-kill-word
+
+# Shift + Backspace: apagar linha e subir
+zle -N shift-backspace-line
+bindkey $'\e[127;2u' shift-backspace-line
+
+
+# ─── FZF ─────────────────────────────────────────────────────────
+
+eval "$(fzf --zsh)"
+
+# FZF theme Catppuccin
+export FZF_DEFAULT_OPTS=" \
+--color=bg+:#313244,bg:#1E1E2E,spinner:#F5E0DC,hl:#F38BA8 \
+--color=fg:#CDD6F4,header:#F38BA8,info:#CBA6F7,pointer:#F5E0DC \
+--color=marker:#B4BEFE,fg+:#CDD6F4,prompt:#CBA6F7,hl+:#F38BA8 \
+--color=selected-bg:#45475A \
+--color=border:#313244,label:#CDD6F4"
+
+export FZF_TAB_COLORS='fg:#CDD6F4,bg:#1E1E2E,hl:#F38BA8,min-height=5'
+
+
+# ─── Zinit ───────────────────────────────────────────────────────
+
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+
+# Instala o Zinit caso ainda não exista
+if [[ ! -d $ZINIT_HOME ]]; then
+    mkdir -p "$(dirname "$ZINIT_HOME")"
+    git clone \
+        https://github.com/zdharma-continuum/zinit.git \
+        "$ZINIT_HOME"
+fi
+
+source "${ZINIT_HOME}/zinit.zsh"
+
+# Plugins
+zinit light zsh-users/zsh-completions
+zinit light zsh-users/zsh-autosuggestions
+zinit light Aloxaf/fzf-tab
+zinit light romkatv/zsh-no-ps2
+
+
+# ─── Completion ──────────────────────────────────────────────────
+
+fpath=(~/.config/zsh/completions $fpath)
+
+autoload -Uz compinit
+compinit
+
+zinit cdreplay -q
+
+# Completion styling
+zstyle ':completion:*' matcher-list 'm:{A-Za-z}={A-Za-z}'
+
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+zstyle ':completion:*' menu no
+
+# FZF Tab
+zstyle ':fzf-tab:*' use-fzf-default-opts yes
+zstyle ':fzf-tab:*' fzf-flags --height=17
+
+# Preview de diretórios e arquivos
+zstyle ':fzf-tab:complete:*' fzf-preview '
+if [[ -d "$realpath" ]]; then
+    lsd --icon always --tree --depth 2 --color always "$realpath"
+elif [[ -f "$realpath" ]]; then
+    bat -n --color=always --line-range :500 "$realpath"
+fi
+'
+
+
+# ─── Zoxide ──────────────────────────────────────────────────────
+
+eval "$(zoxide init zsh)"
+
+
+# ─── Oh My Posh ──────────────────────────────────────────────────
+
+eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/atno.omp.json)"
+
+
+# ─── Pyenv ───────────────────────────────────────────────────────
+
+export PYENV_ROOT="$HOME/.pyenv"
+export PATH="$PYENV_ROOT/bin:$PATH"
+
+eval "$(pyenv init -)"
+
+
+# ─── PATH ────────────────────────────────────────────────────────
+
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.spicetify:$PATH"
+
+
+# ─── Syntax Highlighting ─────────────────────────────────────────
+# Deve ser carregado depois dos demais plugins.
+
+zinit light zsh-users/zsh-syntax-highlighting

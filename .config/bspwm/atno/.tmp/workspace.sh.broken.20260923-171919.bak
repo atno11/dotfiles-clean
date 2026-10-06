@@ -1,0 +1,178 @@
+#!/usr/bin/env bash
+
+set -u
+
+TARGET="${1:-}"
+ACTION="${2:-focus}"
+
+LAYOUT="$HOME/.config/bspwm/atno/layout.sh"
+
+# Verifica se a geometria já corresponde ao modo solicitado.
+# Não modifica o RandR nem o BSPWM.
+layout_ready() {
+    local mode="$1" monitor
+
+    for monitor in TOP BOTTOM; do
+        bspc query -T -m "$monitor" 2>/dev/null |
+            python3 -c '
+import json
+import sys
+
+mode, name = sys.argv[1:]
+try:
+    rect = json.load(sys.stdin)["rectangle"]
+except (ValueError, KeyError):
+    sys.exit(1)
+
+expected = {
+    "split": {
+        "TOP": (0, 0, 1080, 960),
+        "BOTTOM": (0, 960, 1080, 960),
+    },
+    "full": {
+        "TOP": (0, 0, 1080, 1920),
+        "BOTTOM": (1079, 1919, 1, 1),
+    },
+}
+
+actual = tuple(rect[k] for k in ("x", "y", "width", "height"))
+sys.exit(0 if actual == expected[mode][name] else 1)
+' "$mode" "$monitor" || return 1
+    done
+
+    xrandr --listmonitors | awk -v mode="$mode" '
+        /^[[:space:]]*[0-9]+:/ {
+            n++
+            name=$2
+            gsub(/[+*]/, "", name)
+
+            if (name=="TOP" &&
+                $3 ~ /^1080\/[0-9]+x960\/[0-9]+\+0\+0$/ &&
+                $4=="HDMI-A-0") t=1
+
+            if (name=="BOTTOM" &&
+                $3 ~ /^1080\/[0-9]+x960\/[0-9]+\+0\+960$/) b=1
+
+            if (name=="TOP" &&
+                $3 ~ /^1080\/[0-9]+x1920\/[0-9]+\+0\+0$/ &&
+                $4=="HDMI-A-0") f=1
+        }
+        END {
+            if (mode=="split") exit !(n==2 && t && b)
+            exit !(n==1 && f)
+        }
+    ' || return 1
+
+    # Confirma que os desktops inferiores estão no monitor correto.
+    if [[ "$mode" == split ]]; then
+        monitor=BOTTOM
+    else
+        monitor=PARK
+    fi
+
+    local desktops n
+    desktops="$(bspc query -D -m "$monitor" --names)" || return 1
+
+    for n in 1 2 3 4 5 6; do
+        [[ $'\n'"$desktops"$'\n' == *$'\n'"B$n"$'\n'* ]] ||
+            return 1
+    done
+}
+
+
+current_monitor() {
+    bspc query -M -m focused --names 2>/dev/null || echo TOP
+}
+
+is_full_workspace() {
+    case "$1" in
+        7|8|9) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+case "$TARGET" in
+    1|2|3|4|5|6)
+        SOURCE_MONITOR="$(current_monitor)"
+
+        if ! layout_ready split; then
+            "$LAYOUT" split || exit 1
+        fi
+
+        TOP_DESKTOP="T$TARGET"
+        BOTTOM_DESKTOP="B$TARGET"
+
+        case "$ACTION" in
+            focus)
+                # Troca as duas metades para o mesmo workspace lógico.
+                bspc desktop "$TOP_DESKTOP" -a
+                bspc desktop "$BOTTOM_DESKTOP" -a
+
+                # Recupera o foco para o lado onde o usuário estava.
+                case "$SOURCE_MONITOR" in
+                    BOTTOM)
+                        bspc monitor BOTTOM -f
+                        ;;
+                    *)
+                        bspc monitor TOP -f
+                        ;;
+                esac
+                ;;
+
+            move)
+                case "$SOURCE_MONITOR" in
+                    BOTTOM)
+                        bspc node -d "$BOTTOM_DESKTOP"
+                        ;;
+                    *)
+                        bspc node -d "$TOP_DESKTOP"
+                        ;;
+                esac
+                ;;
+
+            move-follow)
+                case "$SOURCE_MONITOR" in
+                    BOTTOM)
+                        bspc node -d "$BOTTOM_DESKTOP" --follow
+                        ;;
+                    *)
+                        bspc node -d "$TOP_DESKTOP" --follow
+                        ;;
+                esac
+                ;;
+
+            *)
+                exit 1
+                ;;
+        esac
+        ;;
+
+    7|8|9)
+        if ! layout_ready full; then
+            "$LAYOUT" full || exit 1
+        fi
+
+        case "$ACTION" in
+            focus)
+                bspc monitor TOP -f
+                bspc desktop "$TARGET" -f
+                ;;
+
+            move)
+                bspc node -d "$TARGET"
+                ;;
+
+            move-follow)
+                bspc node -d "$TARGET" --follow
+                ;;
+
+            *)
+                exit 1
+                ;;
+        esac
+        ;;
+
+    *)
+        exit 1
+        ;;
+esac

@@ -1,0 +1,14 @@
+[Unit]
+Description=Deskflow (user)
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+ExecStartPre=/usr/bin/pkill -9 deskflow
+ExecStart=/usr/bin/deskflow
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

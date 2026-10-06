@@ -1,0 +1,53 @@
+context.modules = [
+    {
+        name = libpipewire-module-vban-send
+        args = {
+            destination.ip = "192.168.0.100"
+            destination.port = 6980
+            sess.name = "ARCH_MAIN"
+            audio.format = "S16LE"
+            audio.rate = 48000
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            stream.props = {
+                node.name = "vban-arch-main"
+                node.description = "VBAN -> Windows (Main)"
+                media.class = "Audio/Sink"
+            }
+        }
+    }
+    {
+        name = libpipewire-module-vban-send
+        args = {
+            destination.ip = "192.168.0.100"
+            destination.port = 6980
+            sess.name = "ARCH_GAMES"
+            audio.format = "S16LE"
+            audio.rate = 48000
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            stream.props = {
+                node.name = "vban-arch-games"
+                node.description = "VBAN -> Windows (Games)"
+                media.class = "Audio/Sink"
+            }
+        }
+    }
+    {
+        name = libpipewire-module-vban-send
+        args = {
+            destination.ip = "192.168.0.100"
+            destination.port = 6980
+            sess.name = "ARCH_AUX"
+            audio.format = "S16LE"
+            audio.rate = 48000
+            audio.channels = 2
+            audio.position = [ FL FR ]
+            stream.props = {
+                node.name = "vban-arch-aux"
+                node.description = "VBAN -> Windows (Aux)"
+                media.class = "Audio/Sink"
+            }
+        }
+    }
+]
