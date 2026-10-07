@@ -1,0 +1,23 @@
+# Install only the block that matches the target machine.
+#
+# AMD
+mesa
+xf86-video-amdgpu
+vulkan-radeon
+
+# Intel
+intel-media-driver
+libva-intel-driver
+libvpl
+vpl-gpu-rt
+vulkan-intel
+
+# Nouveau
+xf86-video-nouveau
+vulkan-nouveau
+
+# Legacy ATI (only if actually needed)
+xf86-video-ati
+
+# VirtualBox guest (VM only)
+virtualbox-guest-utils
