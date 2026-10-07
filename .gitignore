@@ -1,3 +1,5 @@
+# Local installer/test logs
+.tmp/
 
 # Zsh generated completion cache
 .config/zsh/.zcompdump*

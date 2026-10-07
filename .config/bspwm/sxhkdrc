@@ -214,25 +214,41 @@ super + ctrl + Down
 
 # -- Window Resize / Move -- #
 
-# Description: Resize window right
+# Description: Grow window to the right
 super + alt + Right
     bspc node -z right 30 0
 
-# Description: Resize window left
+# Description: Grow window to the left
 super + alt + Left
     bspc node -z left -30 0
 
-# Description: Resize window up
+# Description: Grow window upward
 super + alt + Up
     bspc node -z top 0 -30
 
-# Description: Resize window down
+# Description: Grow window downward
 super + alt + Down
     bspc node -z bottom 0 30
 
-# Description: Move focused window to workspace 1-9
+# Description: Shrink window from the right
+super + alt + shift + Right
+    bspc node -z right -30 0
+
+# Description: Shrink window from the left
+super + alt + shift + Left
+    bspc node -z left 30 0
+
+# Description: Shrink window from the top
+super + alt + shift + Up
+    bspc node -z top 0 30
+
+# Description: Shrink window from the bottom
+super + alt + shift + Down
+    bspc node -z bottom 0 -30
+
+# Description: Move focused window to workspace 1-9 and follow it
 super + shift + {1-9}
-    bspc node -d {1-9}
+    bspc node -d {1-9} --follow
 
 # Description: Swap window left
 super + shift + ctrl + Left
