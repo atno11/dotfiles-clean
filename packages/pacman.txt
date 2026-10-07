@@ -26,6 +26,7 @@ imagemagick
 jq
 libnotify
 lsd
+mesa-utils
 nano
 nemo
 neovim
@@ -54,10 +55,12 @@ qt6ct
 ripgrep
 rofi
 rofimoji
+rxvt-unicode
 sddm
 smartmontools
 sudo
 sxhkd
+tela-circle-icon-theme-dracula
 tk
 ttf-fira-code
 ttf-jetbrains-mono-nerd
@@ -66,6 +69,7 @@ wget
 wireplumber
 wpa_supplicant
 xclip
+xcolor
 xdg-utils
 xdo
 xdotool
