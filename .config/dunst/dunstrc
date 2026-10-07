@@ -7,13 +7,13 @@ horizontal_padding = 20
 
 width = 400
 height = (0, 300)
-offset = 16x60
+offset = (16, 60)
 origin = top-right
 
 frame_width = 2
 separator_height = 2
 frame_color = "#989CFA"
-separator_color= frame
+separator_color = frame
 
 sort = no
 font = JetBrainsMono Nerd Font 15
@@ -28,7 +28,7 @@ hide_duplicate_count = no
 show_indicators = yes
 
 icon_position = left
-max_icon_size= 60
+max_icon_size = 60
 sticky_history = no
 history_length = 6
 title = Dunst
