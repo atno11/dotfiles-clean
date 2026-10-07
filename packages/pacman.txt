@@ -70,6 +70,8 @@ wireplumber
 wpa_supplicant
 xclip
 xcolor
+xdg-desktop-portal
+xdg-desktop-portal-gtk
 xdg-utils
 xdo
 xdotool
