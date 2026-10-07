@@ -1,6 +1,4 @@
 hotkeyhub-bin
 i3lock-color
 oh-my-posh
-tela-circle-icon-theme-dracula
-xcolor
 xkb-switch
