@@ -202,6 +202,11 @@ enable_services() {
     if systemctl list-unit-files vboxservice.service >/dev/null 2>&1; then
         sudo systemctl enable vboxservice.service || true
     fi
+
+    systemctl --user daemon-reload
+    systemctl --user enable pipewire.socket
+    systemctl --user enable pipewire-pulse.socket
+    systemctl --user enable wireplumber.service
 }
 
 configure_shell() {
