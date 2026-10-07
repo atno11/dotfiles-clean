@@ -61,7 +61,7 @@ if command -v picom >/dev/null 2>&1 && [[ -f "$PICOM_CONFIG" ]]; then
 
         *)
             picom \
-                --backend glx \
+                --backend xrender \
                 --config "$PICOM_CONFIG" &
             ;;
     esac
