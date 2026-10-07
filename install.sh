@@ -130,11 +130,9 @@ install_dotfiles() {
     cp -a "$REPO_DIR/.icons/." "$HOME/.icons/"
     cp -a "$REPO_DIR/.xkb/." "$HOME/.xkb/"
 
-    for file in .XCompose .Xresources .profile .zshenv; do
-        if [[ -e "$REPO_DIR/$file" ]]; then
-            cp -a "$REPO_DIR/$file" "$HOME/$file"
-        fi
-    done
+    if [[ -e "$REPO_DIR/.zshenv" ]]; then
+        cp -a "$REPO_DIR/.zshenv" "$HOME/.zshenv"
+    fi
 
     find "$HOME/.local/bin" -type f -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
     chmod +x "$HOME/.config/bspwm/bspwmrc" 2>/dev/null || true
