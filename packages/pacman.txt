@@ -10,6 +10,7 @@ btop
 cliphist
 clipnotify
 corectrl
+delve
 deskflow
 dex
 dmenu
@@ -22,6 +23,8 @@ flameshot
 fzf
 ghostty
 git
+go
+golangci-lint
 htop
 imagemagick
 jq
@@ -64,6 +67,7 @@ sudo
 sxhkd
 tela-circle-icon-theme-dracula
 tk
+tree-sitter-cli
 ttf-fira-code
 ttf-jetbrains-mono-nerd
 vim
