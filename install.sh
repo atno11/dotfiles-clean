@@ -130,6 +130,15 @@ install_dotfiles() {
     cp -a "$REPO_DIR/.icons/." "$HOME/.icons/"
     cp -a "$REPO_DIR/.xkb/." "$HOME/.xkb/"
 
+    # Preserve an existing .xprofile; on a clean install, install our X11 hook.
+    if [[ -f "$REPO_DIR/.xprofile" ]]; then
+        if [[ ! -e "$HOME/.xprofile" && ! -L "$HOME/.xprofile" ]]; then
+            cp -a "$REPO_DIR/.xprofile" "$HOME/.xprofile"
+        elif ! grep -Fq 'deskflow-client.service' "$HOME/.xprofile"; then
+            printf 'NOTE: ~/.xprofile was preserved; add the Deskflow hook manually.\n'
+        fi
+    fi
+
     if [[ -e "$REPO_DIR/.zshenv" ]]; then
         cp -a "$REPO_DIR/.zshenv" "$HOME/.zshenv"
     fi
@@ -137,6 +146,22 @@ install_dotfiles() {
     find "$HOME/.local/bin" -type f -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
     chmod +x "$HOME/.config/bspwm/bspwmrc" 2>/dev/null || true
     find "$HOME/.config/bspwm/atno" -type f -name '*.sh' -exec chmod +x {} + 2>/dev/null || true
+}
+
+install_deskflow_integration() {
+    sudo install -Dm755 \
+        "$REPO_DIR/system/usr/local/libexec/deskflow-sddm-watch" \
+        /usr/local/libexec/deskflow-sddm-watch
+
+    sudo install -Dm644 \
+        "$REPO_DIR/system/etc/systemd/system/deskflow-sddm.service" \
+        /etc/systemd/system/deskflow-sddm.service
+
+    sudo systemctl daemon-reload
+    systemctl --user daemon-reload
+
+    printf 'Deskflow services installed but not activated.\n'
+    printf 'Complete TLS enrollment in docs/DESKFLOW.md before enabling them.\n'
 }
 
 install_python_runtime() {
@@ -227,6 +252,7 @@ validate_installation() {
         polybar
         picom
         dunst
+        deskflow-core
         nemo
         nvim
         yazi
@@ -247,6 +273,16 @@ validate_installation() {
 
     [[ -x "$HOME/.pyenv/versions/$PYTHON_VERSION/bin/python" ]] || {
         printf 'MISSING: Python %s under pyenv\n' "$PYTHON_VERSION"
+        failed=1
+    }
+
+    [[ -f /etc/systemd/system/deskflow-sddm.service ]] || {
+        printf 'MISSING: SDDM Deskflow service\n'
+        failed=1
+    }
+
+    [[ -f "$HOME/.config/systemd/user/deskflow-client.service" ]] || {
+        printf 'MISSING: BSPWM Deskflow user service\n'
         failed=1
     }
 
@@ -273,38 +309,45 @@ main() {
     require_file "$REPO_DIR/packages/aur.txt"
     require_file "$REPO_DIR/system/etc/sddm.conf.d/10-theme.conf"
     require_file "$REPO_DIR/system/etc/sddm.conf.d/20-virtualkbd.conf"
+    require_file "$REPO_DIR/.xprofile"
+    require_file "$REPO_DIR/.config/systemd/user/deskflow-client.service"
+    require_file "$REPO_DIR/system/usr/local/libexec/deskflow-sddm-watch"
+    require_file "$REPO_DIR/system/etc/systemd/system/deskflow-sddm.service"
 
-    stage '1/10 - sudo credentials'
+    stage '1/11 - sudo credentials'
     sudo -v
 
-    stage '2/10 - native packages'
+    stage '2/11 - native packages'
     install_pacman_packages
     install_build_dependencies
 
-    stage '3/10 - hardware packages'
+    stage '3/11 - hardware packages'
     install_hardware_packages
 
-    stage '4/10 - yay bootstrap'
+    stage '4/11 - yay bootstrap'
     bootstrap_yay
 
-    stage '5/10 - AUR packages'
+    stage '5/11 - AUR packages'
     install_aur_packages
 
-    stage '6/10 - dotfiles'
+    stage '6/11 - dotfiles'
     install_dotfiles
 
-    stage '7/10 - Python 3.13.2 and Python modules'
+    stage '7/11 - Deskflow X11 integration (TLS setup remains opt-in)'
+    install_deskflow_integration
+
+    stage '8/11 - Python 3.13.2 and Python modules'
     install_python_runtime
 
-    stage '8/10 - Pawlette'
+    stage '9/11 - Pawlette'
     install_pawlette
 
-    stage '9/10 - SDDM Astronaut and services'
+    stage '10/11 - SDDM Astronaut and services'
     install_sddm_theme
     enable_services
     configure_shell
 
-    stage '10/10 - validation'
+    stage '11/11 - validation'
     validate_installation
 
     printf '\nINSTALLATION COMPLETE\n'
@@ -312,6 +355,7 @@ main() {
     printf 'Log:        %s\n' "$LOG_FILE"
     printf 'Python:     %s\n' "$HOME/.pyenv/versions/$PYTHON_VERSION/bin/python"
     printf 'SDDM theme: %s\n' '/usr/share/sddm/themes/sddm-astronaut-theme'
+    printf 'Deskflow TLS setup: %s\n' 'docs/DESKFLOW.md'
     printf '\nDo not format the real machine yet. Reboot this clean test VM and validate the BSPWM session first.\n'
 }
 
