@@ -19,3 +19,15 @@ Debug split packages such as `*-debug` are intentionally excluded.
 - SDDM snippets under `system/etc/sddm.conf.d/`
 
 The wallpaper data under `~/.local/share/wallpapers` is runtime/user data and is not currently versioned in this repository.
+
+## Deskflow SDDM + BSPWM with TLS
+
+- The package manifest installs `deskflow` from Arch Extra.
+- `install.sh` installs the SDDM system service, watcher, BSPWM user service,
+  and `.xprofile` when no existing `.xprofile` needs preserving.
+- Services are **not** activated until the Windows server fingerprint and both
+  Arch certificates are configured locally.
+- Follow [docs/DESKFLOW.md](docs/DESKFLOW.md) and run
+  `bash scripts/setup-deskflow.sh prepare ...`, then `activate`.
+- Never commit `~/.config/Deskflow`, `/var/lib/sddm/.config/Deskflow`, PEMs,
+  TLS private keys, or trusted-client/servers files.
