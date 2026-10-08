@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+# Runs the Deskflow client only while the SDDM X11 greeter is alive.
+set -u
+
+CONFIG="/var/lib/sddm/.config/Deskflow/Deskflow.conf"
+client_pid=""
+
+log() { printf '[deskflow-sddm] %s\n' "$*"; }
+
+stop_client() {
+    if [[ -n "$client_pid" ]]; then
+        pkill -TERM -P "$client_pid" 2>/dev/null || true
+        kill "$client_pid" 2>/dev/null || true
+        wait "$client_pid" 2>/dev/null || true
+        client_pid=""
+    fi
+}
+
+trap 'stop_client; exit 0' TERM INT
+trap stop_client EXIT
+
+log "Aguardando o SDDM Astronaut..."
+while true; do
+    greeter_pid="$(pgrep -u sddm -f '^/usr/bin/sddm-greeter-qt6([[:space:]]|$)' | head -n 1)"
+    if [[ -z "$greeter_pid" ]]; then sleep 1; continue; fi
+
+    greeter_env="$(tr '\0' '\n' < "/proc/$greeter_pid/environ" 2>/dev/null)" || { sleep 1; continue; }
+    display="$(printf '%s\n' "$greeter_env" | sed -n 's/^DISPLAY=//p' | head -n 1)"
+    xauthority="$(printf '%s\n' "$greeter_env" | sed -n 's/^XAUTHORITY=//p' | head -n 1)"
+
+    if [[ -z "$display" || -z "$xauthority" ]]; then sleep 1; continue; fi
+    if ! runuser -u sddm -- test -r "$xauthority"; then sleep 1; continue; fi
+    if ! runuser -u sddm -- test -r "$CONFIG"; then
+        log "Configuracao do SDDM ainda nao preparada; aguardando."
+        sleep 3
+        continue
+    fi
+
+    log "Astronaut detectado em $display. Iniciando Deskflow."
+    runuser -u sddm -- env DISPLAY="$display" XAUTHORITY="$xauthority" HOME=/var/lib/sddm \
+        /usr/bin/deskflow-core client --new-instance --settings "$CONFIG" &
+    client_pid=$!
+
+    while kill -0 "$greeter_pid" 2>/dev/null && kill -0 "$client_pid" 2>/dev/null; do
+        sleep 0.5
+    done
+
+    log "Astronaut encerrado ou Deskflow finalizado."
+    stop_client
+    while kill -0 "$greeter_pid" 2>/dev/null; do sleep 0.5; done
+    sleep 1
+done
