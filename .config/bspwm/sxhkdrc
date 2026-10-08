@@ -65,7 +65,7 @@ Print
 
 # Description: Take fullscreen screenshot
 super + Print
-    flameshot full --clipboard
+    flameshot full --path /mnt/share/images/screenshots --clipboard
 
 # Description: Switch keyboard layout
 alt + shift
