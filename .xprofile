@@ -1,0 +1,8 @@
+# Deskflow - start/reconnect within the active SDDM -> BSPWM X11 session.
+if [ -n "${DISPLAY:-}" ] && [ -n "${XAUTHORITY:-}" ] && command -v deskflow-core >/dev/null 2>&1; then
+    systemctl --user import-environment DISPLAY XAUTHORITY
+    # Static user service: restarted for each graphical login, not enabled at boot.
+    if [ -r "$HOME/.config/Deskflow/Deskflow.conf" ]; then
+        systemctl --user restart deskflow-client.service >/dev/null 2>&1
+    fi
+fi

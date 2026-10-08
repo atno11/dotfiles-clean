@@ -3,3 +3,6 @@
 
 # Zsh generated completion cache
 .config/zsh/.zcompdump*
+
+# Deskflow identity, private keys, trust databases, and host-local settings
+.config/Deskflow/

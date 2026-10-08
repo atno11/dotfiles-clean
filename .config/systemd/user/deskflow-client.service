@@ -1,0 +1,9 @@
+[Unit]
+Description=Deskflow Client for BSPWM (X11)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/deskflow-core client --new-instance --settings %h/.config/Deskflow/Deskflow.conf
+Restart=always
+RestartSec=5

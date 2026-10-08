@@ -10,6 +10,7 @@ btop
 cliphist
 clipnotify
 corectrl
+deskflow
 dex
 dmenu
 dunst
@@ -45,6 +46,7 @@ pipewire-pulse
 playerctl
 polkit-gnome
 polybar
+python
 pyenv
 python-pipx
 qt5ct
