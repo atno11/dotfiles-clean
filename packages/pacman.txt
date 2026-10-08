@@ -10,8 +10,8 @@ btop
 cliphist
 clipnotify
 corectrl
-dex
 deskflow
+dex
 dmenu
 dunst
 fastfetch
