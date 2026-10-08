@@ -1,13 +1,17 @@
 -- ============================================================
 -- GO DEVELOPMENT
 -- Kickstart.nvim / Neovim 0.11+
+--
+-- LSP:        gopls
+-- Formatter:  goimports via conform.nvim
+-- Debugger:   nvim-dap-go + Delve
+--
+-- Loaded automatically from after/plugin/go.lua.
+-- Preserves existing C#, Lua and other language configurations.
 -- ============================================================
 
--- Mark this module as loaded for diagnostics.
-vim.g.go_module_loaded = true
-
 -- ============================================================
--- 1. LSP - GOPLS
+-- 1. GO LANGUAGE SERVER
 -- ============================================================
 
 vim.lsp.config('gopls', {
@@ -34,34 +38,34 @@ vim.lsp.config('gopls', {
   },
 })
 
+-- Mason's automatic_enable is disabled in the main init.lua.
+-- Enable gopls explicitly.
 vim.lsp.enable('gopls')
 
 -- ============================================================
--- 2. FORMATTING - CONFORM
+-- 2. GO FORMATTING
 -- ============================================================
 
 local conform = require('conform')
 
--- Extend the existing formatter table.
--- Preserve C#, Lua, JSON and all other languages.
+-- Extend the existing configuration without resetting
+-- CSharpier, StyLua, Prettier, or other formatters.
 conform.formatters_by_ft.go = { 'goimports' }
 
-local format_group = vim.api.nvim_create_augroup(
+-- Enable format-on-save for Go source files.
+-- The main init.lua does not currently format Go on save.
+local go_format_group = vim.api.nvim_create_augroup(
   'kickstart-go-format',
   { clear = true }
 )
 
 vim.api.nvim_create_autocmd('BufWritePre', {
-  group = format_group,
+  group = go_format_group,
   pattern = '*.go',
-  callback = function(args)
-    if vim.bo[args.buf].filetype ~= 'go' then
-      return
-    end
 
+  callback = function(args)
     conform.format({
       bufnr = args.buf,
-      async = false,
       timeout_ms = 3000,
       lsp_format = 'fallback',
     })
@@ -69,9 +73,13 @@ vim.api.nvim_create_autocmd('BufWritePre', {
 })
 
 -- ============================================================
--- 3. DEBUGGING - NVIM-DAP + DELVE
+-- 3. GO DEBUGGING
 -- ============================================================
 
+-- The existing kickstart.plugins.debug module is not loaded
+-- by init.lua. Install only the dependencies needed for Go
+-- debugging here, avoiding the unknown configuration
+-- inside that disabled module.
 vim.pack.add({
   'https://github.com/mfussenegger/nvim-dap',
   'https://github.com/leoluz/nvim-dap-go',
@@ -89,77 +97,65 @@ require('dap-go').setup({
 -- 4. GO-SPECIFIC DEBUG KEYMAPS
 -- ============================================================
 
-local debug_group = vim.api.nvim_create_augroup(
+local go_debug_group = vim.api.nvim_create_augroup(
   'kickstart-go-debug',
   { clear = true }
 )
 
-local function configure_debug_keymaps(bufnr)
-  local function opts(description)
-    return {
-      buffer = bufnr,
-      desc = 'Go Debug: ' .. description,
-    }
-  end
-
-  vim.keymap.set(
-    'n',
-    '<F5>',
-    dap.continue,
-    opts('Start / Continue')
-  )
-
-  -- F2 remains reserved for LSP Rename.
-  vim.keymap.set(
-    'n',
-    '<F6>',
-    dap.step_over,
-    opts('Step Over')
-  )
-
-  vim.keymap.set(
-    'n',
-    '<F1>',
-    dap.step_into,
-    opts('Step Into')
-  )
-
-  vim.keymap.set(
-    'n',
-    '<F3>',
-    dap.step_out,
-    opts('Step Out')
-  )
-
-  vim.keymap.set(
-    'n',
-    '<leader>b',
-    dap.toggle_breakpoint,
-    opts('Toggle Breakpoint')
-  )
-
-  vim.keymap.set(
-    'n',
-    '<leader>dt',
-    function()
-      require('dap-go').debug_test()
-    end,
-    opts('Debug Test')
-  )
-end
-
 vim.api.nvim_create_autocmd('FileType', {
-  group = debug_group,
+  group = go_debug_group,
   pattern = 'go',
+
   callback = function(args)
-    configure_debug_keymaps(args.buf)
+    local opts = function(desc)
+      return {
+        buffer = args.buf,
+        desc = 'Go Debug: ' .. desc,
+      }
+    end
+
+    vim.keymap.set(
+      'n',
+      '<F5>',
+      dap.continue,
+      opts('Start/Continue')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<F1>',
+      dap.step_into,
+      opts('Step Into')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<F2>',
+      dap.step_over,
+      opts('Step Over')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<F3>',
+      dap.step_out,
+      opts('Step Out')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<leader>b',
+      dap.toggle_breakpoint,
+      opts('Toggle Breakpoint')
+    )
+
+    vim.keymap.set(
+      'n',
+      '<leader>dt',
+      function()
+        require('dap-go').debug_test()
+      end,
+      opts('Debug Test')
+    )
   end,
 })
-
--- Handle Go buffers already open when this module loads.
-for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-  if vim.api.nvim_buf_is_valid(bufnr)
-      and vim.bo[bufnr].filetype == 'go' then
-    configure_debug_keymaps(bufnr)
-  end
-end
