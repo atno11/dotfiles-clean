@@ -11,6 +11,7 @@ cliphist
 clipnotify
 corectrl
 dex
+deskflow
 dmenu
 dunst
 fastfetch
@@ -45,6 +46,7 @@ pipewire-pulse
 playerctl
 polkit-gnome
 polybar
+python
 pyenv
 python-pipx
 qt5ct
