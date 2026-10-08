@@ -6,6 +6,12 @@
 alias copy-clipboard="cc"
 alias cls="clear"
 alias ls="lsd"
+
+# File listing colors: retain colored names without background highlights.
+# Writable and sticky directories use blue foreground only.
+if [[ ":${LS_COLORS:-}:" != *":ow=01;34:tw=01;34:st=01;34:"* ]]; then
+    export LS_COLORS="${LS_COLORS:+${LS_COLORS}:}ow=01;34:tw=01;34:st=01;34"
+fi
 alias tree="lsd --tree"
 alias vim="nvim"
 alias codex="codex"
