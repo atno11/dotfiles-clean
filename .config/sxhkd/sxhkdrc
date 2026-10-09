@@ -130,7 +130,7 @@ super + Delete
 
 # Description: Reload BSPWM and sxhkd config
 ctrl + shift + r
-    bspc wm -r; pkill -USR1 -x sxhkd; notify-send 'BSPWM / sxhkd' 'Configurações recarregadas' -t 1500
+    bspc wm -r && notify-send 'BSPWM / sxhkd' 'Configuration reloaded' -t 1500
 
 # Description: Close window
 super + q
@@ -265,3 +265,7 @@ super + shift + ctrl + Up
 # Description: Swap window down
 super + shift + ctrl + Down
     bspc node -s south
+
+# Description: Show keyboard shortcuts
+super + h
+    bash $XDG_BIN_HOME/keyhints.sh

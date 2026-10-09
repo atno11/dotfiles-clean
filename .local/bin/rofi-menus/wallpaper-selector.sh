@@ -1,243 +1,560 @@
+
 #!/usr/bin/env bash
 
-# ┏━━━┳━━┳━┓┏━┳━━━┳┓╋╋┏━━┳━┓┏━┓
-# ┗┓┏┓┣┫┣┫┃┗┛┃┃┏━━┫┃╋╋┗┫┣┻┓┗┛┏┛
-# ╋┃┃┃┃┃┃┃┏┓┏┓┃┗━━┫┃╋╋╋┃┃╋┗┓┏┛
-# ╋┃┃┃┃┃┃┃┃┃┃┃┃┏━━┫┃╋┏┓┃┃╋┏┛┗┓
-# ┏┛┗┛┣┫┣┫┃┃┃┃┃┃╋╋┃┗━┛┣┫┣┳┛┏┓┗┓
-# ┗━━━┻━━┻┛┗┛┗┻┛╋╋┗━━━┻━━┻━┛┗━┛
-# The program was created by DIMFLIX
-# Github: https://github.com/DIMFLIX
+set -u
 
-# Configuration
+# Wallpaper Selector
+# Native Rofi tabs for static and animated wallpapers.
+# Preserves legacy directories and Pawlette integration.
+
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+
+WALLPAPER_ROOT="${WALLPAPER_ROOT:-/mnt/share/images/wallpapers}"
+
 WALLPAPERS_DIRS=(
-    "${DATA_HOME}/wallpapers"
-    "${DATA_HOME}/pawlette/theme_wallpapers"
+    "$WALLPAPER_ROOT/static"
+    "$WALLPAPER_ROOT/animated"
+    "$DATA_HOME/wallpapers"
+    "$DATA_HOME/pawlette/theme_wallpapers"
 )
-CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/mewline/thumbs"
-RANDOM_ICON="${DATA_HOME}/meowrch/assets/random.png"
-ROFI_THEME="$HOME/.config/rofi/selecting.rasi"
-CACHE_MAPPING="$CACHE_DIR/cache_mapping.json"
+
+CACHE_DIR="$CACHE_HOME/mewline/thumbs"
 LOCK_FILE="$CACHE_DIR/cache.lock"
-MAX_THREADS=$(nproc 2>/dev/null || echo 4)
-RADIUS=15
+LOG_FILE="$CACHE_DIR/wallpaper-selector.log"
 
-# Initialize cache directory
-mkdir -p "$CACHE_DIR"
-touch "$CACHE_MAPPING"
+ROFI_THEME="$HOME/.config/rofi/selecting.rasi"
 
-# Locking functions
-lock() {
-    exec 9>"$LOCK_FILE" || exit 1
-    flock -w 30 9 || { 
-        echo "Failed to acquire lock"
-        rm -f "$LOCK_FILE"
-        exit 1
-    }
+THUMB_SIZE=500
+THUMB_RADIUS=15
+
+SCRIPT_PATH="$(realpath -- "${BASH_SOURCE[0]}")" || exit 1
+SCRIPT_DIR="$(dirname -- "$SCRIPT_PATH")"
+SET_WALLPAPER_SCRIPT="$SCRIPT_DIR/../set-wallpaper.sh"
+
+mkdir -p "$CACHE_DIR" || exit 1
+
+log_message() {
+    printf '[%s] %s\n' \
+        "$(date '+%Y-%m-%d %H:%M:%S')" \
+        "$*" >> "$LOG_FILE"
 }
 
-unlock() {
-    [[ -e /proc/self/fd/9 ]] && flock -u 9
-    exec 9>&-
-    rm -f "$LOCK_FILE"
+log_error() {
+    printf 'Wallpaper Selector: %s\n' "$*" >&2
+    log_message "ERROR: $*"
 }
 
-# Hash generation
-get_hash() {
-    realpath "$1" | tr -d '\n' | md5sum | awk '{print $1}'
-}
-
-# JSON handling
-safe_jq() {
-    local operation="$1"
-    local tmp_file="${CACHE_MAPPING}.tmp"
-    
-    lock
-    if [[ ! -s "$CACHE_MAPPING" ]]; then
-        echo '{}' > "$CACHE_MAPPING"
+require_command() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        log_error "Missing required command: $1"
+        return 1
     fi
+}
 
-    if ! jq empty "$CACHE_MAPPING" >/dev/null 2>&1; then
-        echo "{}" > "$CACHE_MAPPING"
-    fi
+wallpaper_type() {
+    local file="${1,,}"
 
-    case "$operation" in
-        "add")
-            local h="$2"
-            local p="$3"
-            jq --arg h "$h" --arg p "$p" '. + {($h + ".png"): $p}' "$CACHE_MAPPING" > "$tmp_file"
+    case "$file" in
+        *.jpg|*.jpeg|*.png|*.webp)
+            printf 'static\n'
             ;;
-        "clean")
-            local hashes_json="["
-            for h in "${!existing_hashes[@]}"; do
-                hashes_json+="\"$h\","
-            done
-            hashes_json="${hashes_json%,}]"
-            
-            jq --argjson hashes "$hashes_json" '
-                with_entries(select(
-                    (.value != "") and (.key as $k | $hashes | index($k) != null)
-                ))' "$CACHE_MAPPING" > "$tmp_file"
+        *.gif|*.mp4|*.webm|*.mkv|*.mov|*.m4v)
+            printf 'animated\n'
             ;;
         *)
-            echo "Invalid operation" >&2
             return 1
             ;;
     esac
-
-    if jq -e . "$tmp_file" >/dev/null 2>&1; then
-        mv "$tmp_file" "$CACHE_MAPPING"
-    else
-        echo "Invalid JSON generated, aborting update" >&2
-        rm -f "$tmp_file"
-    fi
-    unlock
 }
 
-# Cache validation
-validate_cache() {
-    declare -A existing_hashes
-    while IFS= read -r -d $'\0' f; do
-        h=$(get_hash "$f")
-        existing_hashes["${h}.png"]=1
-    done < <(find -L "${WALLPAPERS_DIRS[@]}" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0 2>/dev/null)
+get_hash() {
+    local path
 
-    safe_jq "clean"
-    
-    while IFS= read -r -d $'\0' thumb; do
-        h=$(basename "$thumb")
-        if [[ ! ${existing_hashes["$h"]} ]]; then
-            rm -f "$thumb"
-        fi
-    done < <(find "$CACHE_DIR" -name "*.png" -print0)
+    path="$(realpath -- "$1")" || return 1
+
+    printf '%s' "$path" |
+        sha256sum |
+        cut -d ' ' -f 1
 }
 
-# Thumbnail generation
-generate_rounded_thumbnail() {
+thumbnail_path() {
+    local hash
+
+    hash="$(get_hash "$1")" || return 1
+
+    printf '%s/%s.png\n' "$CACHE_DIR" "$hash"
+}
+
+apply_rounded_mask() {
     local input="$1"
     local output="$2"
-    
-    magick convert "$input" \
-        -resize "500x500^" \
+
+    magick "$input" \
+        -auto-orient \
+        -thumbnail "${THUMB_SIZE}x${THUMB_SIZE}^" \
         -gravity center \
-        -extent 500x500 \
-        -format "png" \
-        \( +clone -alpha extract \
-            \( -size 500x500 xc:black \
-                -draw "fill white roundrectangle 0,0 500,500 $RADIUS,$RADIUS" \
-            \) -compose multiply -composite \
-        \) -alpha off -compose copyopacity -composite \
+        -background none \
+        -extent "${THUMB_SIZE}x${THUMB_SIZE}" \
+        \( \
+            -size "${THUMB_SIZE}x${THUMB_SIZE}" \
+            xc:none \
+            -fill white \
+            -draw \
+                "roundrectangle 0,0 $((THUMB_SIZE - 1)),$((THUMB_SIZE - 1)) $THUMB_RADIUS,$THUMB_RADIUS" \
+        \) \
+        -alpha off \
+        -compose CopyOpacity \
+        -composite \
         "$output"
 }
 
-generate_thumbnails() {
-    validate_cache
+extract_video_frame() {
+    local input="$1"
+    local output="$2"
+    local directory
+    local frame=""
 
-    declare -A file_hashes
-    declare -a files
-    while IFS= read -r -d $'\0' f; do
-        [[ -z "$f" || ! -e "$f" ]] && continue
-        h=$(get_hash "$f")
-        if [[ ! -v file_hashes[$h] ]]; then
-            file_hashes[$h]=1
-            thumb="$CACHE_DIR/$h.png"
-            [[ ! -f "$thumb" || "$f" -nt "$thumb" ]] && files+=("$f")
-        fi
-    done < <(find -L "${WALLPAPERS_DIRS[@]}" -type f \( -iname "*.png" -o -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.webp" \) -print0 2>/dev/null)
+    directory="$(
+        mktemp -d "$CACHE_DIR/video.XXXXXXXX"
+    )" || return 1
 
-    ((${#files[@]})) && notify-send -a "Wallpaper Selector" "⏳ Generating ${#files[@]} previews..."
-    
-    tmp_json_dir=$(mktemp -d -p "$CACHE_DIR" thumbs_json.XXXXXX)
-    trap 'rm -rf "$tmp_json_dir"' EXIT
+    if ! mpv \
+        --no-config \
+        --no-audio \
+        --no-sub \
+        --frames=1 \
+        --vo=image \
+        --vo-image-format=png \
+        --vo-image-outdir="$directory" \
+        --really-quiet \
+        -- "$input" \
+        >/dev/null 2>&1
+    then
+        rm -r -- "$directory"
+        return 1
+    fi
 
-    export -f generate_rounded_thumbnail get_hash
-    export CACHE_DIR tmp_json_dir
+    while IFS= read -r -d '' candidate; do
+        frame="$candidate"
+        break
+    done < <(
+        find "$directory" \
+            -maxdepth 1 \
+            -type f \
+            -iname '*.png' \
+            -print0
+    )
 
-    printf "%s\0" "${files[@]}" | xargs -0 -P "$MAX_THREADS" -I{} bash -c '
-        f="$1"
-        [[ -z "$f" || ! -f "$f" ]] && exit 0
-        
-        h=$(get_hash "$f")
-        thumb="$CACHE_DIR/$h.png"
-        path=$(realpath -- "$f") || exit 0
-        
-        if ! generate_rounded_thumbnail "$f" "$thumb" 2>/dev/null; then
-            magick convert "$f" -resize "500x500^" -gravity center -extent 500x500 "$thumb" 2>/dev/null || {
-                echo "Skipping invalid file: $f" >&2
-                exit 0
-            }
-        fi
+    if [[ -z "$frame" ]]; then
+        rm -r -- "$directory"
+        return 1
+    fi
 
-        jq -n --arg h "$h.png" --arg p "$path" \
-            '"'"'if ($p == "" or $h == "") then empty else {($h): $p} end'"'"' \
-            > "$tmp_json_dir/${h}.json.tmp" && mv "$tmp_json_dir/${h}.json.tmp" "$tmp_json_dir/${h}.json"
-    ' _ {}
+    if ! cp -- "$frame" "$output"; then
+        rm -r -- "$directory"
+        return 1
+    fi
 
-    lock
-    {
-        [[ ! -f "$CACHE_MAPPING" ]] && echo "{}" > "$CACHE_MAPPING"
-        
-        tmp_file=$(mktemp -p "$CACHE_DIR" cache_mapping.XXXXXX)
-        
-        if [[ $(find "$tmp_json_dir" -name "*.json" -print0 | xargs -0 -r jq -e . 2>/dev/null | wc -l) -gt 0 ]]; then
-            jq -n 'reduce (inputs | select(. != null)) as $i ({}; . * $i)' "$tmp_json_dir"/*.json > "$tmp_file"
-            
-            jq -s '.[0] as $orig | .[1] as $new | $orig * $new' "$CACHE_MAPPING" "$tmp_file" > "$tmp_file.merged"
-            mv "$tmp_file.merged" "$CACHE_MAPPING"
-        fi
-        
-        rm -f "$tmp_file"
-    } 2>/dev/null
-    unlock
-
-    rm -rf "$tmp_json_dir"
+    rm -r -- "$directory"
 }
 
-# Rofi integration
-generate_rofi_list() {
-    echo -en "Random Wallpaper\x00icon\x1f$RANDOM_ICON\n"
-    jq -r 'to_entries[] | "\(.value)=\(.key)"' "$CACHE_MAPPING" | while IFS='=' read -r p h; do
-        [[ -f "$CACHE_DIR/$h" ]] && echo -en "$(basename "$p")\x00icon\x1f$CACHE_DIR/$h\n"
+generate_thumbnail() {
+    local wallpaper="$1"
+    local thumbnail="$2"
+    local type
+    local source
+    local temporary_dir
+    local result=0
+
+    type="$(wallpaper_type "$wallpaper")" || return 1
+
+    temporary_dir="$(
+        mktemp -d "$CACHE_DIR/thumb.XXXXXXXX"
+    )" || return 1
+
+    source="$wallpaper"
+
+    case "$type" in
+        static)
+            ;;
+        animated)
+            case "${wallpaper,,}" in
+                *.gif)
+                    source="${wallpaper}[0]"
+                    ;;
+                *)
+                    source="$temporary_dir/frame.png"
+
+                    if ! extract_video_frame \
+                        "$wallpaper" \
+                        "$source"
+                    then
+                        result=1
+                    fi
+                    ;;
+            esac
+            ;;
+    esac
+
+    if (( result == 0 )); then
+        if ! apply_rounded_mask \
+            "$source" \
+            "$temporary_dir/thumbnail.png" \
+            2>/dev/null
+        then
+            result=1
+        fi
+    fi
+
+    if (( result == 0 )); then
+        if ! mv -f -- \
+            "$temporary_dir/thumbnail.png" \
+            "$thumbnail"
+        then
+            result=1
+        fi
+    fi
+
+    rm -r -- "$temporary_dir"
+
+    return "$result"
+}
+
+declare -a STATIC_WALLPAPERS=()
+declare -a STATIC_THUMBNAILS=()
+
+declare -a ANIMATED_WALLPAPERS=()
+declare -a ANIMATED_THUMBNAILS=()
+
+declare -a WALLPAPERS=()
+declare -a THUMBNAILS=()
+
+declare -A SEEN_PATHS=()
+
+discover_wallpapers() {
+    local directory
+    local file
+    local canonical
+    local thumbnail
+    local type
+
+    for directory in "${WALLPAPERS_DIRS[@]}"; do
+        [[ -d "$directory" ]] || continue
+
+        while IFS= read -r -d '' file; do
+            canonical="$(realpath -- "$file")" || continue
+
+            [[ -f "$canonical" ]] || continue
+            [[ "$file" == */.current.wall ]] && continue
+
+            if [[ -v SEEN_PATHS["$canonical"] ]]; then
+                continue
+            fi
+
+            type="$(wallpaper_type "$canonical")" || continue
+            thumbnail="$(thumbnail_path "$canonical")" || continue
+
+            SEEN_PATHS["$canonical"]=1
+
+            case "$type" in
+                static)
+                    STATIC_WALLPAPERS+=("$canonical")
+                    STATIC_THUMBNAILS+=("$thumbnail")
+                    ;;
+                animated)
+                    ANIMATED_WALLPAPERS+=("$canonical")
+                    ANIMATED_THUMBNAILS+=("$thumbnail")
+                    ;;
+            esac
+        done < <(
+            find -L "$directory" \
+                -type f \
+                \( \
+                    -iname '*.jpg' \
+                    -o -iname '*.jpeg' \
+                    -o -iname '*.png' \
+                    -o -iname '*.webp' \
+                    -o -iname '*.gif' \
+                    -o -iname '*.mp4' \
+                    -o -iname '*.webm' \
+                    -o -iname '*.mkv' \
+                    -o -iname '*.mov' \
+                    -o -iname '*.m4v' \
+                \) \
+                -print0 2>/dev/null |
+                sort -z
+        )
     done
 }
 
-# Main logic
-main() {
-    command -v magick >/dev/null || { echo "Install imagemagick"; exit 1; }
-    command -v jq >/dev/null || { echo "Install jq"; exit 1; }
-    command -v rofi >/dev/null || { echo "Install rofi"; exit 1; }
+load_category() {
+    WALLPAPERS=()
+    THUMBNAILS=()
 
-    generate_thumbnails
-
-    if [[ "$1" == "--random" ]]; then
-        readarray -t walls < <(jq -r '.[]' "$CACHE_MAPPING")
-        if (( ${#walls[@]} == 0 )); then
-            echo "No wallpapers found in cache!"
-            exit 1
-        fi
-        wall="${walls[RANDOM % ${#walls[@]}]}"
-    else
-        selected=$(generate_rofi_list | rofi -dmenu -i -p "Wallpaper" -theme "$ROFI_THEME")
-        [[ -z "$selected" ]] && exit 0
-
-        if [[ "$selected" == "Random Wallpaper" ]]; then
-            readarray -t walls < <(jq -r '.[]' "$CACHE_MAPPING")
-            wall="${walls[RANDOM % ${#walls[@]}]}"
-        else
-            wall=$(jq -r --arg n "$selected" '
-                        to_entries[] | 
-                        .value as $path | 
-                        ($path | split("/")[-1]) as $fname | 
-                        select($fname == $n) | 
-                        $path' "$CACHE_MAPPING" | head -n1)
-        fi
-    fi
-
-    if [[ -f "$wall" ]]; then
-        sh "${XDG_BIN_HOME:-$HOME/bin}/set-wallpaper.sh" "$wall"
-    fi
+    case "$1" in
+        static)
+            WALLPAPERS=("${STATIC_WALLPAPERS[@]}")
+            THUMBNAILS=("${STATIC_THUMBNAILS[@]}")
+            ;;
+        animated)
+            WALLPAPERS=("${ANIMATED_WALLPAPERS[@]}")
+            THUMBNAILS=("${ANIMATED_THUMBNAILS[@]}")
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
-trap 'unlock; exit' INT TERM EXIT
+generate_missing_thumbnails() {
+    local index
+    local wallpaper
+    local thumbnail
+
+    for index in "${!WALLPAPERS[@]}"; do
+        wallpaper="${WALLPAPERS[$index]}"
+        thumbnail="${THUMBNAILS[$index]}"
+
+        if [[ -f "$thumbnail" &&
+              ! "$wallpaper" -nt "$thumbnail" ]]; then
+            continue
+        fi
+
+        if ! generate_thumbnail "$wallpaper" "$thumbnail"; then
+            log_error "Preview failed: $wallpaper"
+        fi
+    done
+}
+
+generate_mode_entries() {
+    local index
+    local wallpaper
+    local thumbnail
+    local label
+
+    printf 'Random Wallpaper\0icon\x1fmedia-playlist-shuffle\x1finfo\x1frandom\n'
+
+    for index in "${!WALLPAPERS[@]}"; do
+        wallpaper="${WALLPAPERS[$index]}"
+        thumbnail="${THUMBNAILS[$index]}"
+        label="$(basename -- "$wallpaper")"
+
+        if [[ -f "$thumbnail" ]]; then
+            printf '%s\0icon\x1f%s\x1finfo\x1f%s\n' \
+                "$label" "$thumbnail" "$wallpaper"
+        else
+            printf '%s\0icon\x1fimage-x-generic\x1finfo\x1f%s\n' \
+                "$label" "$wallpaper"
+        fi
+    done
+}
+
+select_random_wallpaper() {
+    local count="${#WALLPAPERS[@]}"
+    local index
+
+    if (( count == 0 )); then
+        log_error "No wallpapers in selected category."
+        return 1
+    fi
+
+    index=$((RANDOM % count))
+    printf '%s\n' "${WALLPAPERS[$index]}"
+}
+
+# Launch wallpaper application outside the Rofi script process.
+# Log the actual exit code from set-wallpaper.sh.
+apply_selected_wallpaper() {
+    local wallpaper="$1"
+
+    if [[ ! -f "$wallpaper" ]]; then
+        log_error "Wallpaper not found: $wallpaper"
+        return 1
+    fi
+
+    if [[ ! -f "$SET_WALLPAPER_SCRIPT" ]]; then
+        log_error "Missing application script: $SET_WALLPAPER_SCRIPT"
+        return 1
+    fi
+
+    require_command setsid || return 1
+
+    log_message "Dispatching wallpaper: $wallpaper"
+
+    setsid -f bash -c '
+        script="$1"
+        wallpaper="$2"
+        logfile="$3"
+
+        bash "$script" "$wallpaper" >> "$logfile" 2>&1
+        status=$?
+
+        printf "[%s] Application exit status: %s\n" \
+            "$(date "+%Y-%m-%d %H:%M:%S")" \
+            "$status" >> "$logfile"
+
+        exit "$status"
+    ' _ \
+        "$SET_WALLPAPER_SCRIPT" \
+        "$wallpaper" \
+        "$LOG_FILE" \
+        >/dev/null 2>&1 </dev/null
+}
+
+run_rofi_mode() {
+    local category="$1"
+    local wallpaper
+    local candidate
+    local found=0
+
+    discover_wallpapers
+    load_category "$category" || return 1
+
+    log_message \
+        "Rofi mode=$category retv=${ROFI_RETV:-0}"
+
+    case "${ROFI_RETV:-0}" in
+        0)
+            (
+                exec 9>"$LOCK_FILE"
+                flock -x 9 || exit 1
+                generate_missing_thumbnails
+            ) || return 1
+
+            generate_mode_entries
+            ;;
+        1)
+            log_message \
+                "Selection received: ${ROFI_INFO:-<empty>}"
+
+            if [[ "${ROFI_INFO:-}" == "random" ]]; then
+                wallpaper="$(select_random_wallpaper)" ||
+                    return 1
+            else
+                wallpaper="${ROFI_INFO:-}"
+
+                for candidate in "${WALLPAPERS[@]}"; do
+                    if [[ "$candidate" == "$wallpaper" ]]; then
+                        found=1
+                        break
+                    fi
+                done
+
+                if (( found != 1 )); then
+                    log_error \
+                        "Selection not found in $category: $wallpaper"
+                    return 1
+                fi
+            fi
+
+            apply_selected_wallpaper "$wallpaper"
+            ;;
+        *)
+            log_message "Unhandled Rofi return value."
+            return 0
+            ;;
+    esac
+}
+
+launch_rofi() {
+    local -a arguments=(
+        -show "Estáticos"
+        -modi "Estáticos:$SCRIPT_PATH --mode-static,Animados:$SCRIPT_PATH --mode-animated"
+        -show-icons
+    )
+
+    if [[ -f "$ROFI_THEME" ]]; then
+        arguments+=(-theme "$ROFI_THEME")
+    fi
+
+    arguments+=(
+        -theme-str '
+            mainbox {
+                children: [ mode-switcher, inputbar, listview ];
+            }
+
+            mode-switcher {
+                enabled: true;
+                orientation: horizontal;
+                spacing: 8px;
+                padding: 16px 20px 6px 20px;
+                background-color: @main-bg;
+            }
+
+            button {
+                expand: true;
+                padding: 10px 14px;
+                border-radius: 10px;
+                background-color: transparent;
+                text-color: @main-fg;
+                horizontal-align: 0.5;
+            }
+
+            button selected {
+                background-color: @select-bg;
+                text-color: @select-fg;
+            }
+        '
+    )
+
+    rofi "${arguments[@]}"
+}
+
+main() {
+    local category
+    local wallpaper
+    local index
+    local -a all_wallpapers=()
+
+    require_command magick || return 1
+    require_command mpv || return 1
+    require_command rofi || return 1
+    require_command sha256sum || return 1
+    require_command flock || return 1
+
+    case "${1:-}" in
+        --mode-static)
+            run_rofi_mode static
+            return $?
+            ;;
+        --mode-animated)
+            run_rofi_mode animated
+            return $?
+            ;;
+    esac
+
+    discover_wallpapers
+
+    all_wallpapers=(
+        "${STATIC_WALLPAPERS[@]}"
+        "${ANIMATED_WALLPAPERS[@]}"
+    )
+
+    if (( ${#all_wallpapers[@]} == 0 )); then
+        log_error "No wallpapers found."
+        return 1
+    fi
+
+    case "${1:-}" in
+        --random)
+            index=$((RANDOM % ${#all_wallpapers[@]}))
+            apply_selected_wallpaper "${all_wallpapers[$index]}"
+            ;;
+        --static|--animated)
+            category="${1#--}"
+            load_category "$category" || return 1
+            wallpaper="$(select_random_wallpaper)" || return 1
+            apply_selected_wallpaper "$wallpaper"
+            ;;
+        "")
+            launch_rofi
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            return 1
+            ;;
+    esac
+}
+
 main "$@"

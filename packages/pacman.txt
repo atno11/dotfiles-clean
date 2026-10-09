@@ -1,3 +1,4 @@
+
 autorandr
 base-devel
 bat
@@ -31,6 +32,7 @@ jq
 libnotify
 lsd
 mesa-utils
+mpv
 nano
 nemo
 neovim
@@ -83,6 +85,7 @@ xdo
 xdotool
 xorg-server
 xorg-xinit
+xorg-xrandr
 xorg-xset
 xorg-xsetroot
 xsettingsd
