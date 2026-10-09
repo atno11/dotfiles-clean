@@ -2,3 +2,4 @@ hotkeyhub-bin
 i3lock-color
 oh-my-posh
 xkb-switch
+xwinwrap-git
