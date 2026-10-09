@@ -1,0 +1,105 @@
+
+@import "theme"
+
+configuration {
+    show-icons: false;
+}
+
+* {
+    font: "JetBrainsMono Nerd Font 10";
+}
+
+window {
+    width: 88%;
+    height: 76%;
+    location: center;
+    anchor: center;
+    transparency: "real";
+    background-color: @main-bg;
+    border: 2px;
+    border-color: @main-br;
+    border-radius: 15px;
+    padding: 22px;
+}
+
+mainbox {
+    orientation: vertical;
+    children: [ inputbar, listview ];
+    background-color: transparent;
+    spacing: 18px;
+}
+
+inputbar {
+    orientation: horizontal;
+    children: [ prompt, entry ];
+    background-color: transparent;
+    spacing: 0px;
+}
+
+prompt {
+    str: "  KEYHINTS  ";
+    background-color: @main-br;
+    text-color: @select-fg;
+    border-radius: 10px 0px 0px 10px;
+    padding: 10px;
+}
+
+entry {
+    placeholder: "Search shortcuts...";
+    background-color: transparent;
+    text-color: @main-fg;
+    placeholder-color: @main-fg;
+    border: 2px;
+    border-color: @main-br;
+    border-radius: 0px 10px 10px 0px;
+    padding: 10px;
+    expand: true;
+}
+
+listview {
+    enabled: true;
+    columns: 2;
+    lines: 6;
+    layout: vertical;
+    flow: horizontal;
+    fixed-columns: true;
+    fixed-height: true;
+    dynamic: false;
+    expand: true;
+    spacing: 12px;
+    scrollbar: true;
+    background-color: transparent;
+}
+
+element {
+    orientation: horizontal;
+    children: [ element-text ];
+    background-color: transparent;
+    border: 1px;
+    border-color: @main-br;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+element normal.normal {
+    background-color: transparent;
+    text-color: @main-fg;
+}
+
+element alternate.normal {
+    background-color: transparent;
+    text-color: @main-fg;
+}
+
+element selected.normal {
+    background-color: @select-bg;
+    text-color: @select-fg;
+    border-color: @select-bg;
+}
+
+element-text {
+    background-color: transparent;
+    text-color: inherit;
+    horizontal-align: 0.0;
+    vertical-align: 0.5;
+}
