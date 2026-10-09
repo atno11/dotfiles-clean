@@ -14,6 +14,8 @@ require('neo-tree').setup {
     window = {
       mappings = {
         ['\\'] = 'close_window',
+        ['d'] = 'add_directory',
+        ['f'] = 'add',
       },
     },
   },
