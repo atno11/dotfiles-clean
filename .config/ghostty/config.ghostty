@@ -9,6 +9,10 @@ window-decoration = false
 # Shift + Backspace
 keybind = shift+backspace=text:\x15
 
+# Clipboard
+keybind = performable:ctrl+shift+c=copy_to_clipboard
+keybind = ctrl+shift+x=unbind
+
 # Splits
 keybind = ctrl+shift+o=new_split:right
 keybind = ctrl+shift+e=new_split:down
