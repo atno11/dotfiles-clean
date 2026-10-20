@@ -1,4 +1,3 @@
-
 autorandr
 base-devel
 bat
@@ -38,6 +37,7 @@ nemo
 neovim
 network-manager-applet
 networkmanager
+npm
 noto-fonts
 noto-fonts-emoji
 pacman-contrib
