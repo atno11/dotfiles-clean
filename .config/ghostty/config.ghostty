@@ -9,6 +9,9 @@ window-decoration = false
 # Shift + Backspace
 keybind = shift+backspace=text:\x15
 
+# Smart Ctrl + Backspace
+keybind = ctrl+backspace=csi:127;5u
+
 # Clipboard
 keybind = performable:ctrl+shift+c=copy_to_clipboard
 keybind = ctrl+shift+x=unbind

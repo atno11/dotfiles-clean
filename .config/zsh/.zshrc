@@ -113,8 +113,33 @@ bindkey '^[[1;5D' backward-word
 # Backspace: apagar um caractere
 bindkey '^?' backward-delete-char
 
-# Ctrl + Backspace: apagar uma palavra
+# Ctrl + H: preserve existing word deletion
 bindkey '^H' backward-kill-word
+
+# Ctrl + Backspace: delete path and filename segments
+function backward-delete-segment() {
+    emulate -L zsh
+
+    [[ -z $LBUFFER ]] && return
+
+    if [[ ${LBUFFER[-1]} == [./] ]]; then
+        # Delete a trailing path separator or extension dot.
+        LBUFFER="${LBUFFER[1,-2]}"
+    elif [[ ${LBUFFER[-1]} == [[:space:]] ]]; then
+        # Delete trailing whitespace.
+        while [[ -n $LBUFFER && ${LBUFFER[-1]} == [[:space:]] ]]; do
+            LBUFFER="${LBUFFER[1,-2]}"
+        done
+    else
+        # Delete characters up to the previous separator.
+        while [[ -n $LBUFFER && ${LBUFFER[-1]} != [./[:space:]] ]]; do
+            LBUFFER="${LBUFFER[1,-2]}"
+        done
+    fi
+}
+
+zle -N backward-delete-segment
+bindkey $'\e[127;5u' backward-delete-segment
 
 # Shift + Backspace: apagar linha e subir
 zle -N shift-backspace-line
