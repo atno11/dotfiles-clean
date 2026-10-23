@@ -3,6 +3,25 @@
 -- Allow horizontal arrows to cross line boundaries.
 vim.opt.whichwrap:append('<,>,[,]')
 
+-- Shift+arrows start Select mode, including when editing in Insert mode.
+-- Unshifted arrows stop selection and return to the pending Insert mode.
+vim.opt.keymodel:append({ 'startsel', 'stopsel' })
+vim.opt.selectmode:append('key')
+
+-- Extend selection by words or whole lines from Insert and Select modes.
+-- A typed character replaces the selection and resumes Insert mode.
+local selection_keys = {
+  { key = '<C-S-Left>', insert = '<C-o>vb<C-g>', select = '<C-o>b', desc = 'Select previous word' },
+  { key = '<C-S-Right>', insert = '<C-o>ve<C-g>', select = '<C-o>e', desc = 'Select next word' },
+  { key = '<C-S-Up>', insert = '<C-o>Vk<C-g>', select = '<C-o>k', desc = 'Select whole lines upward' },
+  { key = '<C-S-Down>', insert = '<C-o>Vj<C-g>', select = '<C-o>j', desc = 'Select whole lines downward' },
+}
+
+for _, mapping in ipairs(selection_keys) do
+  vim.keymap.set('i', mapping.key, mapping.insert, { desc = mapping.desc })
+  vim.keymap.set('s', mapping.key, mapping.select, { desc = mapping.desc })
+end
+
 -- Track blank lines created by arrow navigation.
 local namespace = vim.api.nvim_create_namespace('atno.navigation')
 local generated_lines = {}
