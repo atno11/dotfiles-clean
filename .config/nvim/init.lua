@@ -902,7 +902,18 @@ do
     --
     -- But for many setups, the LSP (`rust_analyzer`) will work just fine
     -- rust_analyzer = {},
-    jsonls = {},
+    jsonls = {
+      settings = {
+        json = {
+          schemas = {
+            {
+              fileMatch = { 'tsconfig*.json' },
+              url = 'https://www.schemastore.org/tsconfig.json',
+            },
+          },
+        },
+      },
+    },
     roslyn_ls = {},
     stylua = {}, -- Used to format Lua code
 
@@ -1087,6 +1098,13 @@ do
 
     sources = {
       default = { 'lsp', 'path', 'snippets' },
+
+      per_filetype = {
+        typescript = { 'lsp', 'snippets' },
+        typescriptreact = { 'lsp', 'snippets' },
+        javascript = { 'lsp', 'snippets' },
+        javascriptreact = { 'lsp', 'snippets' },
+      },
     },
 
     snippets = { preset = 'luasnip' },
