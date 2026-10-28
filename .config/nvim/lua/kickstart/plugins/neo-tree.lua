@@ -41,6 +41,15 @@ local function move_with_preview(key)
   end
 end
 
+-- Expand a closed directory without toggling an already expanded one.
+local function expand_closed_directory(state)
+  local node = state.tree:get_node()
+
+  if node and node.type == 'directory' and not node:is_expanded() then
+    state.commands.open(state)
+  end
+end
+
 -- Return to Neo-tree only after saving a file opened from Neo-tree.
 local return_group = vim.api.nvim_create_augroup(
   'neo-tree-return-on-save',
@@ -90,6 +99,8 @@ require('neo-tree').setup {
         -- Automatic preview with arrow keys.
         ['<Down>'] = move_with_preview('j'),
         ['<Up>'] = move_with_preview('k'),
+        ['<Right>'] = expand_closed_directory,
+        ['<Left>'] = 'close_node',
 
         ['<CR>'] = 'open',
 
