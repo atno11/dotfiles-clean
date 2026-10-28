@@ -902,6 +902,7 @@ do
     --
     -- But for many setups, the LSP (`rust_analyzer`) will work just fine
     -- rust_analyzer = {},
+    jsonls = {},
     roslyn_ls = {},
     stylua = {}, -- Used to format Lua code
 
