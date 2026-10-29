@@ -126,6 +126,63 @@ do
       end,
     },
 
+    tailwindcss = {
+      -- Avoid the default .git fallback in projects without Tailwind CSS.
+      root_dir = function(bufnr, on_dir)
+        local fname = vim.api.nvim_buf_get_name(bufnr)
+        if fname == '' then return end
+
+        local search = {
+          path = vim.fs.dirname(fname),
+          upward = true,
+          type = 'file',
+        }
+
+        -- Tailwind CSS v3 configuration files.
+        local config_file = vim.fs.find({
+          'tailwind.config.js',
+          'tailwind.config.cjs',
+          'tailwind.config.mjs',
+          'tailwind.config.ts',
+          'tailwind.config.cts',
+          'tailwind.config.mts',
+        }, search)[1]
+
+        if config_file then
+          on_dir(vim.fs.dirname(config_file))
+          return
+        end
+
+        -- Tailwind CSS v4 can use a CSS entrypoint without tailwind.config.*.
+        local package_json = vim.fs.find('package.json', search)[1]
+        if not package_json then return end
+
+        local ok, package = pcall(function()
+          return vim.json.decode(table.concat(vim.fn.readfile(package_json), '\n'))
+        end)
+        if not ok or type(package) ~= 'table' then return end
+
+        for _, group in ipairs({
+          'dependencies',
+          'devDependencies',
+          'optionalDependencies',
+          'peerDependencies',
+        }) do
+          local dependencies = package[group]
+          if type(dependencies) == 'table' and type(dependencies.tailwindcss) == 'string' then
+            on_dir(vim.fs.dirname(package_json))
+            return
+          end
+        end
+      end,
+
+      -- Keep Conform/Prettier responsible for formatting.
+      on_attach = function(client)
+        client.server_capabilities.documentFormattingProvider = false
+        client.server_capabilities.documentRangeFormattingProvider = false
+      end,
+    },
+
     jsonls = {
       settings = {
         json = {
