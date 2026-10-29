@@ -114,6 +114,18 @@ do
     --
     -- But for many setups, the LSP (`rust_analyzer`) will work just fine
     -- rust_analyzer = {},
+    eslint = {
+      filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+      settings = {
+        format = false, -- Keep Conform/Prettier as the formatter.
+        codeActionOnSave = { enable = false }, -- Actions remain available manually via gra.
+      },
+      on_attach = function(client)
+        client.server_capabilities.documentFormattingProvider = false
+        client.server_capabilities.documentRangeFormattingProvider = false
+      end,
+    },
+
     jsonls = {
       settings = {
         json = {
