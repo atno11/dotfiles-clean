@@ -50,39 +50,6 @@ local function expand_closed_directory(state)
   end
 end
 
--- Return to Neo-tree only after saving a file opened from Neo-tree.
-local return_group = vim.api.nvim_create_augroup(
-  'neo-tree-return-on-save',
-  { clear = true }
-)
-
-vim.api.nvim_create_autocmd('BufWritePost', {
-  group = return_group,
-  callback = function(args)
-    if not vim.b[args.buf].neo_tree_return_on_save then
-      return
-    end
-
-    vim.schedule(function()
-      if not vim.api.nvim_buf_is_valid(args.buf) then
-        return
-      end
-
-      -- Avoid switching away if another buffer gained focus.
-      if vim.api.nvim_get_current_buf() ~= args.buf then
-        return
-      end
-
-      require('neo-tree.command').execute {
-        action = 'show',
-        source = 'filesystem',
-        reveal = true,
-        focus = true,
-      }
-    end)
-  end,
-})
-
 require('neo-tree').setup {
   filesystem = {
     window = {
@@ -120,15 +87,6 @@ require('neo-tree').setup {
           action = 'close',
           source = 'filesystem',
         }
-
-        -- The opened buffer becomes the active editing buffer.
-        vim.schedule(function()
-          local bufnr = vim.api.nvim_get_current_buf()
-
-          if vim.bo[bufnr].buftype == '' then
-            vim.b[bufnr].neo_tree_return_on_save = true
-          end
-        end)
       end,
     },
   },

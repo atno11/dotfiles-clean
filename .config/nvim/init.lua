@@ -3,6 +3,7 @@ require 'config.options'
 require 'config.diagnostics'
 require 'config.keymaps'
 require 'config.autocmds'
+require 'config.autosave'
 
 require 'plugins.manager' -- PackChanged build hooks must precede vim.pack.add.
 require 'plugins.ui' -- Includes the Catppuccin setup at its original position.
