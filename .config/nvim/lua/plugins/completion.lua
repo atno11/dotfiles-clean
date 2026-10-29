@@ -17,6 +17,24 @@ do
 
   -- [[ Autocomplete Engine ]]
   vim.pack.add { { src = gh 'saghen/blink.cmp', version = vim.version.range '1.*' } }
+  local function import_origin(ctx)
+    local item = ctx.item
+    local client = item.client_id and vim.lsp.get_client_by_id(item.client_id)
+    if client and client.name == 'tailwindcss' then return '' end
+    if ctx.label_description ~= '' then return ctx.label_description end
+    if item.source_id ~= 'lsp' or not client or client.name ~= 'ts_ls' then return '' end
+
+    -- The TypeScript server prefixes actionable autoimports and puts their module in detail.
+    local data = item.data
+    local autoimport_prefix = '￿'
+    if type(data) == 'table' and type(data.cacheId) == 'number'
+      and type(item.sortText) == 'string' and item.sortText:sub(1, #autoimport_prefix) == autoimport_prefix
+      and type(item.detail) == 'string' then
+      return item.detail
+    end
+    return ''
+  end
+
   require('blink.cmp').setup {
     keymap = {
       -- 'default' (recommended) for mappings similar to built-in completions
@@ -57,6 +75,17 @@ do
       -- By default, you may press `<c-space>` to show the documentation.
       -- Optionally, set `auto_show = true` to show the documentation after a delay.
       documentation = { auto_show = false, auto_show_delay_ms = 500 },
+      menu = {
+        draw = {
+          columns = {
+            { 'label', 'import_origin', gap = 1 },
+            { 'kind_icon', 'kind' },
+          },
+          components = {
+            import_origin = { text = import_origin, highlight = 'BlinkCmpLabelDetail' },
+          },
+        },
+      },
     },
 
     sources = {

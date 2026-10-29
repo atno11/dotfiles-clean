@@ -127,6 +127,11 @@ do
     },
 
     tailwindcss = {
+      settings = {
+        tailwindCSS = {
+          classFunctions = { 'cva' },
+        },
+      },
       -- Avoid the default .git fallback in projects without Tailwind CSS.
       root_dir = function(bufnr, on_dir)
         local fname = vim.api.nvim_buf_get_name(bufnr)
