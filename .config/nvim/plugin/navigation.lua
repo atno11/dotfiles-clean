@@ -11,6 +11,8 @@ vim.opt.selectmode:append('key')
 -- Extend selection by words or whole lines from Insert and Select modes.
 -- A typed character replaces the selection and resumes Insert mode.
 local selection_keys = {
+  { key = '<S-Left>', insert = '<C-o>h<C-o>v<C-g>', select = '<C-o>h', desc = 'Select previous character' },
+  { key = '<S-Right>', insert = '<C-o>v<C-g>', select = '<C-o>l', desc = 'Select next character' },
   { key = '<C-S-Left>', insert = '<C-o>vb<C-g>', select = '<C-o>b', desc = 'Select previous word' },
   { key = '<C-S-Right>', insert = '<C-o>ve<C-g>', select = '<C-o>e', desc = 'Select next word' },
   { key = '<C-S-Up>', insert = '<C-o>Vk<C-g>', select = '<C-o>k', desc = 'Select whole lines upward' },

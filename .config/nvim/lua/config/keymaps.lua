@@ -54,10 +54,6 @@ do
     desc = 'Insert line below',
   })
 
-  vim.keymap.set('i', '<C-CR>', '<Esc>o', {
-    desc = 'Insert line below',
-  })
-
   -- Insert line above like VS Code
   vim.keymap.set('n', '<C-S-CR>', 'O', {
     desc = 'Insert line above',
@@ -65,6 +61,14 @@ do
 
   vim.keymap.set('i', '<C-S-CR>', '<Esc>O', {
     desc = 'Insert line above',
+  })
+
+  vim.keymap.set('i', '<C-z>', '<C-o>u', {
+    desc = 'Undo and continue inserting',
+  })
+
+  vim.keymap.set('i', '<C-r>', '<C-o><C-r>', {
+    desc = 'Redo and continue inserting',
   })
 
   -- ============================================================

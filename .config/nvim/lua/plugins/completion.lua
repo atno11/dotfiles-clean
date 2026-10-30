@@ -59,7 +59,7 @@ do
       --
       -- See `:help blink-cmp-config-keymap` for defining your own keymap
       preset = 'enter',
-      ['<C-CR>'] = { 'fallback' },
+      ['<C-Space>'] = { 'show' },
       ['<C-S-CR>'] = { 'fallback' },
       -- For more advanced Luasnip keymaps (e.g. selecting choice nodes, expansion) see:
       --    https://github.com/L3MON4D3/LuaSnip?tab=readme-ov-file#keymaps
@@ -72,6 +72,7 @@ do
     },
 
     completion = {
+      trigger = { show_on_keyword = false, show_on_trigger_character = false },
       -- By default, you may press `<c-space>` to show the documentation.
       -- Optionally, set `auto_show = true` to show the documentation after a delay.
       documentation = { auto_show = false, auto_show_delay_ms = 500 },
