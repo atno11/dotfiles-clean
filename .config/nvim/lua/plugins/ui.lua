@@ -2,6 +2,8 @@ local gh = require 'plugins.github'
 
 do
   -- [[ Installing and Configuring Plugins ]]
+  vim.pack.add { gh 'yaocccc/visual-multi.nvim' }
+  require('plugins.multicursor').setup()
   --
   -- To install a plugin simply call `vim.pack.add` with its git url.
   -- This will download the default branch of the plugin, which will usually be `main` or `master`
