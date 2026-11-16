@@ -35,9 +35,14 @@ title = Dunst
 class = Dunst
 corner_radius = 10
 
+always_run_script = false
+
 mouse_left_click = close_current
 mouse_middle_click = do_action
 mouse_right_click = close_all
+
+[notification_sound]
+script = ~/.config/dunst/notify-sound.sh
 
 [ignore_flameshot_warning]
 body = "grim's screenshot component is implemented based on wlroots, it may not be used in GNOME or similar desktop environments"
