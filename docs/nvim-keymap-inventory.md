@@ -457,3 +457,245 @@ Mode is the effective API mode (`n`, `x`, `s`, `o`, `i`, `c`, or `t`). `global` 
 ## Capture limits
 
 This is an effective runtime snapshot, not a claim that every action was physically pressed. Terminal encoding and event-driven maps require separate tests. Built-in runtime maps are retained where they appear in the snapshot to make precedence visible.
+
+## Dynamic buffer snapshots
+
+These mappings were captured after opening Neo-tree, attaching `lua_ls` to a Lua buffer, attaching Gitsigns to a tracked file in a temporary Git repository, and entering a three-selection visual-multi session. They supplement the earlier global and filetype snapshots. The source column identifies the setup or plugin responsible for the buffer map; an `unknown` action means a Lua callback with no description.
+
+### Neo-tree open buffer
+
+| Mode | Key | Source | Intended behavior | Effective action |
+|---|---|---|---|---|
+| n |   | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | toggle_node | callback |
+| n | # | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | fuzzy_sorter | callback |
+| n | . | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | set_root | callback |
+| n | / | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | fuzzy_finder | callback |
+| n | <2-LeftMouse> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open | callback |
+| n | <BS> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | navigate_up | callback |
+| n | <C-;> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | clear_selection | callback |
+| n | <C-B> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | scroll_preview | callback |
+| n | <C-F> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | scroll_preview | callback |
+| n | <C-R> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | clear_clipboard | callback |
+| n | <C-S-I> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | invert_selection | callback |
+| n | <C-S> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | quick_jump | callback |
+| n | <C-X> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | clear_filter | callback |
+| n | <CR> | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open | callback |
+| n | <Down> | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undocumented callback | callback |
+| n | <Esc> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | cancel | callback |
+| n | <Left> | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | close_node | callback |
+| n | <Right> | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undocumented callback | callback |
+| n | <Tab> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | select | callback |
+| n | <Up> | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undocumented callback | callback |
+| n | <lt> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | prev_source | callback |
+| n | > | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | next_source | callback |
+| n | ? | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | show_help | callback |
+| n | A | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | add_directory | callback |
+| n | C | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | close_node | callback |
+| n | D | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | fuzzy_finder_directory | callback |
+| n | H | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | toggle_hidden | callback |
+| n | P | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | toggle_preview | callback |
+| n | R | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | refresh | callback |
+| n | S | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open_split | callback |
+| n | T | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | trash | callback |
+| n | U | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | restore_from_trash | callback |
+| n | [g | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | prev_git_modified | callback |
+| n | \ | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | close_window | callback |
+| n | ]g | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | next_git_modified | callback |
+| n | a | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | add | callback |
+| n | b | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | rename_basename | callback |
+| n | c | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | copy | callback |
+| n | d | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | add_directory | callback |
+| n | e | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | toggle_auto_expand_width | callback |
+| n | f | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | add | callback |
+| n | i | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | show_file_details | callback |
+| n | j | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undocumented callback | callback |
+| n | k | ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undocumented callback | callback |
+| n | l | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | focus_preview | callback |
+| n | m | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | move | callback |
+| n | o | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | show_help | callback |
+| n | oc | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_created | callback |
+| n | od | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_diagnostics | callback |
+| n | og | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_git_status | callback |
+| n | om | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_modified | callback |
+| n | on | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_name | callback |
+| n | os | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_size | callback |
+| n | ot | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | order_by_type | callback |
+| n | p | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | paste_from_clipboard | callback |
+| n | q | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | close_window | callback |
+| n | r | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | rename | callback |
+| n | s | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open_vsplit | callback |
+| n | t | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open_tabnew | callback |
+| n | u | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | undo | callback |
+| n | w | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | open_with_window_picker | callback |
+| n | x | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | cut_to_clipboard | callback |
+| n | y | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | copy_to_clipboard | callback |
+| n | z | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | close_all_nodes | callback |
+| s | <C-S-I> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | invert_selection | callback |
+| s | <Tab> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | select | callback |
+| s | T | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | trash | callback |
+| s | U | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | restore_from_trash | callback |
+| s | x | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | cut_to_clipboard | callback |
+| s | y | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | copy_to_clipboard | callback |
+| x | <C-S-I> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | invert_selection | callback |
+| x | <Tab> | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | select | callback |
+| x | T | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | trash | callback |
+| x | U | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | restore_from_trash | callback |
+| x | x | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | cut_to_clipboard | callback |
+| x | y | neo-tree.nvim buffer maps; custom overrides in ~/.config/nvim/lua/kickstart/plugins/neo-tree.lua | copy_to_clipboard | callback |
+
+### Attached Lua LSP buffer
+
+| Mode | Key | Source | Intended behavior | Effective action |
+|---|---|---|---|---|
+| i | " | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | ' | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | ( | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | ) | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | <BS> | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs delete | callback |
+| i | [ | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | ] | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | \` | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | { | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| i | } | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | autopairs map key | callback |
+| n |   | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n |  hD | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [D]iff against last commit | callback |
+| n |  hQ | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git hunk [Q]uickfix list (all files in repo) | callback |
+| n |  hR | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [R]eset buffer | callback |
+| n |  hS | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [S]tage buffer | callback |
+| n |  hb | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [b]lame line | callback |
+| n |  hd | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [d]iff against index | callback |
+| n |  hi | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git preview hunk [i]nline | callback |
+| n |  hp | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [p]review hunk | callback |
+| n |  hq | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git hunk [q]uickfix list (all changes in this file) | callback |
+| n |  hr | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [r]eset hunk | callback |
+| n |  hs | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [s]tage hunk | callback |
+| n |  tb | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [T]oggle git show [b]lame line | callback |
+| n |  th | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | LSP: [T]oggle Inlay [H]ints | callback |
+| n |  tw | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [T]oggle git intra-line [w]ord diff | callback |
+| n | " | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger registers | callback |
+| n | ' | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger marks | callback |
+| n | <Plug> | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n | K | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | vim.lsp.buf.hover() | callback |
+| n | [ | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n | [c | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | Jump to previous git [c]hange | callback |
+| n | ] | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n | ]c | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | Jump to next git [c]hange | callback |
+| n | \` | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger marks | callback |
+| n | g | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n | g' | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger marks | callback |
+| n | gO | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | Open Document Symbols | callback |
+| n | gW | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | Open Workspace Symbols | callback |
+| n | g\` | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger marks | callback |
+| n | grD | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | LSP: [G]oto [D]eclaration | callback |
+| n | gra | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | LSP: [G]oto Code [A]ction | callback |
+| n | grd | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [G]oto [D]efinition | callback |
+| n | gri | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [G]oto [I]mplementation | callback |
+| n | grn | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | LSP: [R]e[n]ame | callback |
+| n | grr | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [G]oto [R]eferences | callback |
+| n | grt | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | [G]oto [T]ype Definition | callback |
+| n | z | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger | callback |
+| n | z= | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | which-key-trigger spelling | callback |
+| o | ih | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | text object [i]nside [h]unk | callback |
+| s |  hr | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [r]eset hunk | callback |
+| s |  hs | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [s]tage hunk | callback |
+| x |  hr | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [r]eset hunk | callback |
+| x |  hs | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | git [s]tage hunk | callback |
+| x | gra | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | LSP: [G]oto Code [A]ction | callback |
+| x | ih | LSP/Telescope attachment in ~/.config/nvim/lua/plugins/lsp.lua and telescope.lua; other plugin buffer maps | text object [i]nside [h]unk | callback |
+
+### Attached Gitsigns buffer
+
+| Mode | Key | Source | Intended behavior | Effective action |
+|---|---|---|---|---|
+| n |   | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n |  hD | ~/.config/nvim/lua/plugins/ui.lua | git [D]iff against last commit | callback |
+| n |  hQ | ~/.config/nvim/lua/plugins/ui.lua | git hunk [Q]uickfix list (all files in repo) | callback |
+| n |  hR | ~/.config/nvim/lua/plugins/ui.lua | git [R]eset buffer | callback |
+| n |  hS | ~/.config/nvim/lua/plugins/ui.lua | git [S]tage buffer | callback |
+| n |  hb | ~/.config/nvim/lua/plugins/ui.lua | git [b]lame line | callback |
+| n |  hd | ~/.config/nvim/lua/plugins/ui.lua | git [d]iff against index | callback |
+| n |  hi | ~/.config/nvim/lua/plugins/ui.lua | git preview hunk [i]nline | callback |
+| n |  hp | ~/.config/nvim/lua/plugins/ui.lua | git [p]review hunk | callback |
+| n |  hq | ~/.config/nvim/lua/plugins/ui.lua | git hunk [q]uickfix list (all changes in this file) | callback |
+| n |  hr | ~/.config/nvim/lua/plugins/ui.lua | git [r]eset hunk | callback |
+| n |  hs | ~/.config/nvim/lua/plugins/ui.lua | git [s]tage hunk | callback |
+| n |  tb | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | [T]oggle git show [b]lame line | callback |
+| n |  tw | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | [T]oggle git intra-line [w]ord diff | callback |
+| n | " | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger registers | callback |
+| n | ' | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger marks | callback |
+| n | <Plug> | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n | [ | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n | [c | ~/.config/nvim/lua/plugins/ui.lua | Jump to previous git [c]hange | callback |
+| n | ] | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n | ]c | ~/.config/nvim/lua/plugins/ui.lua | Jump to next git [c]hange | callback |
+| n | \` | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger marks | callback |
+| n | g | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n | g' | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger marks | callback |
+| n | g\` | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger marks | callback |
+| n | z | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger | callback |
+| n | z= | Gitsigns on_attach in ~/.config/nvim/lua/plugins/ui.lua; which-key triggers | which-key-trigger spelling | callback |
+| o | ih | ~/.config/nvim/lua/plugins/ui.lua | text object [i]nside [h]unk | callback |
+| s |  hr | ~/.config/nvim/lua/plugins/ui.lua | git [r]eset hunk | callback |
+| s |  hs | ~/.config/nvim/lua/plugins/ui.lua | git [s]tage hunk | callback |
+| x |  hr | ~/.config/nvim/lua/plugins/ui.lua | git [r]eset hunk | callback |
+| x |  hs | ~/.config/nvim/lua/plugins/ui.lua | git [s]tage hunk | callback |
+| x | ih | ~/.config/nvim/lua/plugins/ui.lua | text object [i]nside [h]unk | callback |
+
+### Active visual-multi session
+
+| Mode | Key | Source | Intended behavior | Effective action |
+|---|---|---|---|---|
+| i | <C-V> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: paste at cursors | callback |
+| n |   | visual-multi.nvim session maps; which-key triggers | which-key-trigger | callback |
+| n | " | visual-multi.nvim session maps; which-key triggers | which-key-trigger registers | callback |
+| n | $ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move $ | callback |
+| n | ' | visual-multi.nvim session maps; which-key triggers | which-key-trigger marks | callback |
+| n | + | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: increase number | callback |
+| n | 0 | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move 0 | callback |
+| n | <C-D> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: find next | callback |
+| n | <C-Down> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: add cursor down | callback |
+| n | <C-Left> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: select left | callback |
+| n | <C-N> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: select all | callback |
+| n | <C-R> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: redo | callback |
+| n | <C-Right> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: select right | callback |
+| n | <C-Up> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: add cursor up | callback |
+| n | <C-W> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: add word | callback |
+| n | <C-X> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: add cursor | callback |
+| n | <Esc> | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: leave mode or clear | callback |
+| n | <Plug> | visual-multi.nvim session maps; which-key triggers | which-key-trigger | callback |
+| n | A | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: append at line end | callback |
+| n | D | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: delete to end of line | callback |
+| n | I | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: insert at first nonblank | callback |
+| n | N | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: find previous | callback |
+| n | O | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: open line above | callback |
+| n | U | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: uppercase selections | callback |
+| n | V | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: shrink selection | callback |
+| n | [ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: previous cursor | callback |
+| n | ] | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: next cursor | callback |
+| n | ^ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move ^ | callback |
+| n | _ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: decrease number | callback |
+| n | \` | visual-multi.nvim session maps; which-key triggers | which-key-trigger marks | callback |
+| n | a | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: append | callback |
+| n | b | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move b | callback |
+| n | c | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: change | callback |
+| n | d | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: delete | callback |
+| n | e | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move e | callback |
+| n | g | visual-multi.nvim session maps; which-key triggers | which-key-trigger | callback |
+| n | g' | visual-multi.nvim session maps; which-key triggers | which-key-trigger marks | callback |
+| n | g\` | visual-multi.nvim session maps; which-key triggers | which-key-trigger marks | callback |
+| n | h | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move h | callback |
+| n | i | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: insert | callback |
+| n | j | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move j | callback |
+| n | k | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move k | callback |
+| n | l | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move l | callback |
+| n | o | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: open line below | callback |
+| n | p | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: paste | callback |
+| n | q | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: remove current | callback |
+| n | u | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: undo or lowercase selections | callback |
+| n | v | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: expand selection | callback |
+| n | w | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: move w | callback |
+| n | x | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: delete character | callback |
+| n | y | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: yank | callback |
+| n | z | visual-multi.nvim session maps; which-key triggers | which-key-trigger | callback |
+| n | z= | visual-multi.nvim session maps; which-key triggers | which-key-trigger spelling | callback |
+| n | ~ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: toggle character case | callback |
