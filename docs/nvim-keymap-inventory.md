@@ -1,6 +1,6 @@
 # Neovim effective keymap inventory
 
-Captured from the effective `~/.config/nvim` on Neovim 0.12.6. Global maps and buffer-local maps in Lua, Go, TypeScript, JSON, and Markdown sample buffers are included. `nvim_get_keymap` and `nvim_buf_get_keymap` supplied the effective maps; `:verbose map` supplied the runtime source. A callback RHS appears as `callback`; its description states intended behavior. `Lua` and `runtime/generated` sources are unresolved runtime provenance. Filetype and LSP attachment can add further buffer maps.
+Captured from the effective `~/.config/nvim` on Neovim 0.12.6. The first phase recorded 618 map entries across global, filetype, and active plugin states; Phase 2 adds 62 active Telescope prompt entries, for 680 state-specific entries in total. The same mapping may appear in several contexts. `nvim_get_keymap` and `nvim_buf_get_keymap` supplied the effective maps; `:verbose map` supplied the runtime source where available. A callback RHS appears as `callback`; its description states intended behavior. `Lua` and `runtime/generated` sources are unresolved runtime provenance. Other plugin UI states can add buffer maps.
 
 Mode is the effective API mode (`n`, `x`, `s`, `o`, `i`, `c`, or `t`). `global` or a filetype names the scope. For mappings with no description, intended behavior is inferred from the RHS only.
 
@@ -699,3 +699,76 @@ These mappings were captured after opening Neo-tree, attaching `lua_ls` to a Lua
 | n | z | visual-multi.nvim session maps; which-key triggers | which-key-trigger | callback |
 | n | z= | visual-multi.nvim session maps; which-key triggers | which-key-trigger spelling | callback |
 | n | ~ | visual-multi.nvim/lua/visual-multi/mappings.lua | Visual Multi: toggle character case | callback |
+
+### Active Telescope prompt
+
+The `find_files` picker was open in a PTY. These 62 buffer-local mappings are plugin-defined and transient. Input `sample` filtered two temporary files, and `<CR>` opened `/tmp/km-telescope-fixture/sample.txt`.
+
+| Mode | Key | Class and source | Intended behavior | Effective action |
+|---|---|---|---|---|
+| i | <2-LeftMouse> | plugin default: telescope.nvim | telescope\|double_mouse_click | callback |
+| i | <C-/> | plugin default: telescope.nvim | telescope\|which_key | callback |
+| i | <C-C> | plugin default: telescope.nvim | telescope\|close | callback |
+| i | <C-D> | plugin default: telescope.nvim | telescope\|preview_scrolling_down | callback |
+| i | <C-F> | plugin default: telescope.nvim | telescope\|preview_scrolling_left | callback |
+| i | <C-J> | plugin default: telescope.nvim | telescope\|nop | callback |
+| i | <C-K> | plugin default: telescope.nvim | telescope\|preview_scrolling_right | callback |
+| i | <C-L> | plugin default: telescope.nvim | telescope\|complete_tag | callback |
+| i | <C-N> | plugin default: telescope.nvim | telescope\|move_selection_next | callback |
+| i | <C-P> | plugin default: telescope.nvim | telescope\|move_selection_previous | callback |
+| i | <C-Q> | plugin default: telescope.nvim | telescope\|send_to_qflist + open_qflist | callback |
+| i | <C-R> | plugin default: telescope.nvim | which-key-trigger registers | callback |
+| i | <C-R><C-A> | plugin default: telescope.nvim | telescope\|insert_original_cWORD | callback |
+| i | <C-R><C-F> | plugin default: telescope.nvim | telescope\|insert_original_cfile | callback |
+| i | <C-R><C-L> | plugin default: telescope.nvim | telescope\|insert_original_cline | callback |
+| i | <C-R><C-W> | plugin default: telescope.nvim | telescope\|insert_original_cword | callback |
+| i | <C-T> | plugin default: telescope.nvim | telescope\|select_tab | callback |
+| i | <C-U> | plugin default: telescope.nvim | telescope\|preview_scrolling_up | callback |
+| i | <C-V> | plugin default: telescope.nvim | telescope\|select_vertical | callback |
+| i | <C-W> | plugin default: telescope.nvim | undocumented callback | <C-S-W> |
+| i | <C-X> | plugin default: telescope.nvim | telescope\|select_horizontal | callback |
+| i | <C-_> | plugin default: telescope.nvim | telescope\|which_key | callback |
+| i | <CR> | plugin default: telescope.nvim | telescope\|select_default | callback |
+| i | <Down> | plugin default: telescope.nvim | telescope\|move_selection_next | callback |
+| i | <LeftMouse> | plugin default: telescope.nvim | telescope\|mouse_click | callback |
+| i | <M-f> | plugin default: telescope.nvim | telescope\|results_scrolling_left | callback |
+| i | <M-k> | plugin default: telescope.nvim | telescope\|results_scrolling_right | callback |
+| i | <M-q> | plugin default: telescope.nvim | telescope\|send_selected_to_qflist + open_qflist | callback |
+| i | <PageDown> | plugin default: telescope.nvim | telescope\|results_scrolling_down | callback |
+| i | <PageUp> | plugin default: telescope.nvim | telescope\|results_scrolling_up | callback |
+| i | <S-Tab> | plugin default: telescope.nvim | telescope\|toggle_selection + move_selection_better | callback |
+| i | <Tab> | plugin default: telescope.nvim | telescope\|toggle_selection + move_selection_worse | callback |
+| i | <Up> | plugin default: telescope.nvim | telescope\|move_selection_previous | callback |
+| n | <2-LeftMouse> | plugin default: telescope.nvim | telescope\|double_mouse_click | callback |
+| n | <C-D> | plugin default: telescope.nvim | telescope\|preview_scrolling_down | callback |
+| n | <C-F> | plugin default: telescope.nvim | telescope\|preview_scrolling_left | callback |
+| n | <C-K> | plugin default: telescope.nvim | telescope\|preview_scrolling_right | callback |
+| n | <C-Q> | plugin default: telescope.nvim | telescope\|send_to_qflist + open_qflist | callback |
+| n | <C-T> | plugin default: telescope.nvim | telescope\|select_tab | callback |
+| n | <C-U> | plugin default: telescope.nvim | telescope\|preview_scrolling_up | callback |
+| n | <C-V> | plugin default: telescope.nvim | telescope\|select_vertical | callback |
+| n | <C-X> | plugin default: telescope.nvim | telescope\|select_horizontal | callback |
+| n | <CR> | plugin default: telescope.nvim | telescope\|select_default | callback |
+| n | <Down> | plugin default: telescope.nvim | telescope\|move_selection_next | callback |
+| n | <Esc> | plugin default: telescope.nvim | telescope\|close | callback |
+| n | <LeftMouse> | plugin default: telescope.nvim | telescope\|mouse_click | callback |
+| n | <M-f> | plugin default: telescope.nvim | telescope\|results_scrolling_left | callback |
+| n | <M-k> | plugin default: telescope.nvim | telescope\|results_scrolling_right | callback |
+| n | <M-q> | plugin default: telescope.nvim | telescope\|send_selected_to_qflist + open_qflist | callback |
+| n | <PageDown> | plugin default: telescope.nvim | telescope\|results_scrolling_down | callback |
+| n | <PageUp> | plugin default: telescope.nvim | telescope\|results_scrolling_up | callback |
+| n | <S-Tab> | plugin default: telescope.nvim | telescope\|toggle_selection + move_selection_better | callback |
+| n | <Tab> | plugin default: telescope.nvim | telescope\|toggle_selection + move_selection_worse | callback |
+| n | <Up> | plugin default: telescope.nvim | telescope\|move_selection_previous | callback |
+| n | ? | plugin default: telescope.nvim | telescope\|which_key | callback |
+| n | G | plugin default: telescope.nvim | telescope\|move_to_bottom | callback |
+| n | H | plugin default: telescope.nvim | telescope\|move_to_top | callback |
+| n | L | plugin default: telescope.nvim | telescope\|move_to_bottom | callback |
+| n | M | plugin default: telescope.nvim | telescope\|move_to_middle | callback |
+| n | gg | plugin default: telescope.nvim | telescope\|move_to_top | callback |
+| n | j | plugin default: telescope.nvim | telescope\|move_selection_next | callback |
+| n | k | plugin default: telescope.nvim | telescope\|move_selection_previous | callback |
+
+## Classification notes
+
+The tables above classify mappings by scope and runtime source. Paths under `.config/nvim` or `~/.config/nvim` are user configuration or plugin setup supplied by that configuration; installed plugin paths are plugin-defined mappings; `/usr/share/nvim` paths are Neovim runtime defaults. A `Lua` or `runtime/generated` source is unresolved provenance and should not be treated as proof of a user-defined key. Custom setup is concentrated in `lua/config/keymaps.lua`, `lua/plugins/{ui,telescope,lsp,formatting,multicursor}.lua`, `plugin/{navigation,ctrl-backspace,visual-editing}.lua`, `after/plugin/go.lua`, and `lua/kickstart/plugins/neo-tree.lua`. The tracked `plugin/visual-editing.lua` is absent from the independent live config; the live config has extra Insert `<C-CR>` and the shadowed Insert `<C-BS>` definition.
