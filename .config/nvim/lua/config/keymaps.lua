@@ -166,11 +166,6 @@ do
     desc = 'Go to symbol in file',
   })
 
-  -- Delete word forward when cursor is at the beginning
-  vim.keymap.set('i', '<C-BS>', '<C-o>de', {
-    desc = 'Delete word forward',
-  })
-
   -- Delete previous word when cursor is at the end
   vim.keymap.set('i', '<A-BS>', '<C-g>u<C-w>', {
     desc = 'Delete previous word',
