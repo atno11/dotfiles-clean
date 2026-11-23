@@ -87,7 +87,7 @@ Every KM item began **PENDING**. Its criterion stays fixed here; the final resul
 | KM-01 | Every custom shortcut is classified by mode, source, scope, target action and effective mapping. | PENDING | The 680-entry inventory and classification notes cover active global, filetype, and selected plugin states in all applicable modes. Some generated sources and transient UI states remain unresolved. |
 | KM-02 | All duplicates, shadowed mappings and intentional overrides are analyzed with effective precedence evidence. | PENDING | The earlier Insert `<C-BS>` shadowing, LSP/Go/Gitsigns/Neo-tree buffer precedence, Telescope prompt maps, and new `<C-W>` interception have evidence. An exhaustive audit of every transient plugin state remains open. |
 | KM-03 | Custom editing, selection, clipboard, line movement, undo/redo and navigation shortcuts execute their intended behavior. | PENDING | Tested line movement, duplication, delete/cut, `+` clipboard, buffer navigation, wrap, indentation, Select-mode replacement, and undo/redo on temporary files. Other defined combinations and physical clipboard integration were not all exercised. |
-| KM-04 | Multicursor shortcuts and mode transitions work without unintended interception of native window commands. | FAIL | Character and line multicursor workflows passed, but Normal `<C-W>h` did not change windows: the plugin's global `<C-W>` map started a selection. `<C-h>` still changed windows. |
+| KM-04 | Multicursor shortcuts and mode transitions work without unintended interception of native window commands. | PASS | The original `<C-W>` interception was corrected in the focused follow-up below. PTY tests showed native `<C-W>h/l` changing splits before, during, and after a multicursor session; add-word, selection, editing, undo/redo, and exit also passed. |
 | KM-05 | Neo-tree, Telescope, LSP and Gitsigns representative custom actions execute successfully in their appropriate runtime contexts. | PASS | PTY picker/file opening, Neo-tree navigation/preview/open/create, LSP definition/references/rename, and Gitsigns navigation/preview/stage/reset succeeded in disposable fixtures. No applicable LSP code-action edit was demonstrated. |
 | KM-06 | Go DAP shortcuts execute against a safe debug fixture when the required tooling is available; otherwise report explicit environmental blockers. | PASS | Go and Delve were installed. A mapped breakpoint and F5/F1/F6/F3 callbacks produced a verified breakpoint and three step stops in `/tmp/km-go-dap`; no install was needed. |
 | KM-07 | Remaining physical key-delivery questions, including F24, are resolved by evidence or retained as explicitly documented manual PENDING tests. | PENDING | Prior physical Neovim and Ghostty PASS results above are preserved. F24 was not physically delivered in this environment. PTY-injected keys cannot establish keyboard delivery. |
@@ -95,8 +95,29 @@ Every KM item began **PENDING**. Its criterion stays fixed here; the final resul
 
 ### Conflict disposition and recommendations
 
-1. **High impact, verified:** visual-multi's default Normal `<C-W>` “add word” map intercepts the native window command prefix. Keep the feature but move `add_cursor_word` to an unused sequence in `lua/plugins/multicursor.lua`, then retest `<C-W>h/j/k/l` and the replacement key. This is a proposed correction only; no mapping changed during the audit.
+1. **High impact, corrected in follow-up:** visual-multi's default Normal `<C-W>` “add word” map intercepted the native window command prefix. The focused follow-up moved `add_cursor_word` to `<leader>mw` and verified `<C-W>h/l` before, during, and after a session. Other native `<C-W>` commands were not individually exercised.
 2. **Medium impact, configuration drift:** the tracked visual-editing plugin and Shift+Left/Right Insert-selection definitions are absent from the live configuration. Reconcile them deliberately if the live setup is meant to match tracked dotfiles. The live extra Insert `<C-CR>` and shadowed `<C-BS>` remain preserved.
 3. **Low impact, unverified:** physically test F24 in Ghostty with `:lua print(vim.fn.keytrans(vim.fn.getcharstr()))`, then inspect `:verbose nmap <F24>`. Keep it PENDING until the emitted key token and action are observed. An LSP code action should be tested on a fixture that offers a known applicable action.
 
 No new autosave, formatting, or save-policy test was run in Phase 2, and those configurations were not changed.
+
+## Focused follow-up: restore native Ctrl+W
+
+On branch `audit/nvim-keymaps-complete`, `lua/plugins/multicursor.lua` now sets `add_cursor_word = '<leader>mw'`. `find_next = '<C-d>'`, `select_all = '<C-n>'`, `case_sensitive = false`, and all other setup remain unchanged. The separate live `~/.config/nvim` was not edited; this result describes the tracked configuration tested from a disposable copy under `/tmp/mc-fix-config-home/nvim`.
+
+The interactive PTY fixture used `/tmp/mc-fix-sample.txt` containing `word word word` and two split windows. `:maparg` found “Visual Multi: add word” on `<leader>mw`, while no standalone `<C-W>` map was present before the session. During and after the session, a `which-key-trigger` appeared on `<C-W>`; it did not invoke add-word or intercept the tested native window commands. `<leader>mw` created one add-word selection. Ctrl+D created/extended to two selections, Ctrl+N selected all three, `iQ<Esc>` produced `Qword Qword Qword`, `u` restored `word word word`, `<C-r>` redid the edit, and Escape cleared the session.
+
+### Fixed regression checklist
+
+| ID | Result | Evidence |
+|---|---|---|
+| MC-01 | PASS | Native `<C-W>h` switched from the right to the left split before, during, and after visual-multi. |
+| MC-02 | PASS | Native `<C-W>l` switched from the left to the right split before and during visual-multi. |
+| MC-03 | PASS | Effective `<leader>mw` map described “Visual Multi: add word” and created a one-region selection. |
+| MC-04 | PASS | Effective Ctrl+D and Ctrl+N maps retained their descriptions; the PTY session showed two and then three selections. |
+| MC-05 | PASS | Three-cursor editing, undo, redo, and Escape exit produced the expected text and cleared the session. |
+| MC-06 | PASS | No standalone visual-multi `<C-W>` add-word map remained. A later `which-key-trigger` prefix map did not block `<C-W>h/l`. |
+| MC-07 | PASS | The disposable tracked config started in Neovim 0.12.6; Lua syntax and `git diff --check` passed. |
+| MC-08 | PASS | Only the focused multicursor setup and audit documents changed. Autosave, formatting, save policy, live config, `nvim.log`, and unrelated files were preserved. |
+
+This PTY test injected keys; it proves effective Neovim behavior in the test environment, not physical keyboard delivery. The earlier user-confirmed physical shortcuts remain valid. KM-01, KM-02, KM-03, and KM-07 retain their Phase 2 PENDING status, including the physical F24 check.

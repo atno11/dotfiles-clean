@@ -772,3 +772,7 @@ The `find_files` picker was open in a PTY. These 62 buffer-local mappings are pl
 ## Classification notes
 
 The tables above classify mappings by scope and runtime source. Paths under `.config/nvim` or `~/.config/nvim` are user configuration or plugin setup supplied by that configuration; installed plugin paths are plugin-defined mappings; `/usr/share/nvim` paths are Neovim runtime defaults. A `Lua` or `runtime/generated` source is unresolved provenance and should not be treated as proof of a user-defined key. Custom setup is concentrated in `lua/config/keymaps.lua`, `lua/plugins/{ui,telescope,lsp,formatting,multicursor}.lua`, `plugin/{navigation,ctrl-backspace,visual-editing}.lua`, `after/plugin/go.lua`, and `lua/kickstart/plugins/neo-tree.lua`. The tracked `plugin/visual-editing.lua` is absent from the independent live config; the live config has extra Insert `<C-CR>` and the shadowed Insert `<C-BS>` definition.
+
+## Tracked multicursor correction
+
+The tables above remain snapshots of the **separate live** `~/.config/nvim`, where visual-multi's default `<C-W>` add-word mapping is still present. The tracked configuration now sets `add_cursor_word = '<leader>mw'` in `lua/plugins/multicursor.lua`. A disposable copy of the tracked config confirmed the effective Normal `<leader>mw` add-word action and native `<C-W>h/l` navigation. The live configuration was not changed by this correction.
