@@ -51,7 +51,7 @@ keybind = ctrl+shift+p=unbind
 keybind = ctrl+shift+f=unbind
 keybind = ctrl+shift+o=unbind
 
-# Ghostty shortcuts moved to Ctrl+Alt.
+# Ghostty shortcuts using Ctrl+G sequences.
 keybind = ctrl+g>key_p=toggle_command_palette
 keybind = ctrl+g>key_f=start_search
 keybind = ctrl+g>key_o=new_split:right
