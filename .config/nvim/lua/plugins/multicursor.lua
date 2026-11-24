@@ -6,6 +6,7 @@ function M.setup()
     mappings = {
       find_next = '<C-d>',
       select_all = '<C-n>',
+      add_cursor_word = '<leader>mw',
     },
   }
 end
